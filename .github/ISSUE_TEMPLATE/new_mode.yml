@@ -1,0 +1,38 @@
+name: New mode or policy proposal
+description: Propose a new decision mode (like Bug Triage) or changes to an existing policy.
+labels: [policy]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Mode or policy name
+      placeholder: e.g. Dependency Upgrade Risk
+    validations:
+      required: true
+  - type: textarea
+    id: input
+    attributes:
+      label: What would the user paste in?
+    validations:
+      required: true
+  - type: textarea
+    id: facts
+    attributes:
+      label: Facts the model should extract
+      description: Name, type, and allowed values for each field.
+    validations:
+      required: true
+  - type: textarea
+    id: rules
+    attributes:
+      label: Rules and thresholds
+      description: Include any veto conditions — things that decide the outcome on their own.
+    validations:
+      required: true
+  - type: textarea
+    id: decision
+    attributes:
+      label: Decision output
+      description: The typed decision fields and their possible values.
+    validations:
+      required: true

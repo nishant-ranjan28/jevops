@@ -1,5 +1,9 @@
 # JevOps
 
+[![CI](https://github.com/nishant-ranjan28/jevops/actions/workflows/ci.yml/badge.svg)](https://github.com/nishant-ranjan28/jevops/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D22.6-brightgreen.svg)](.nvmrc)
+
 **An AI-powered engineering decision cockpit.**
 
 An LLM reads the mess. A deterministic policy engine called **Jev** makes the call. The
@@ -114,7 +118,7 @@ window.
 
 ## Setup
 
-Requires Node 20+ (developed on Node 24; the test runner needs Node 22.6+).
+Requires Node 22.6+ (developed on Node 24 — see `.nvmrc`).
 
 ```bash
 npm install
@@ -319,7 +323,35 @@ it, and you may need it on `next start` too.
 
 ## Scope
 
-This is a weekend prototype: no auth, no database, no persistence, no GitHub OAuth. State lives in the browser
+JevOps is early-stage (v0.x): no auth, no database, no persistence, no GitHub OAuth. State lives in the browser
 tab. The "deterministic actions" panel shows what the application *would* execute against
 GitHub, PagerDuty, and a deploy controller — the decision and the payloads are real, the
 integrations are not wired.
+
+---
+
+## Deploying a public demo
+
+The safest public deployment is **mock-only**: deploy to Vercel (or any Node host) and set
+**no** `OPENROUTER_API_KEY` or `GROQ_API_KEY`. The provider chain then ends at the
+deterministic mock, so the demo costs nothing, cannot be used as a free LLM proxy, and gives
+the same result on every run.
+
+Live PR review still works without a token, at GitHub's anonymous limit of 60 requests an
+hour per server IP. Setting `GITHUB_TOKEN` raises that to 5000 — use a fine-grained token
+with no repository permissions beyond public read.
+
+If you do put live keys on a public deployment, add rate limiting and set a spend limit
+with your provider first.
+
+---
+
+## Contributing
+
+Contributions are welcome — new modes, new providers, policy tuning, and bug reports. Start
+with [CONTRIBUTING.md](CONTRIBUTING.md). Report security issues privately; see
+[SECURITY.md](SECURITY.md).
+
+## License
+
+[Apache License 2.0](LICENSE). Copyright 2026 Nishant Ranjan.
