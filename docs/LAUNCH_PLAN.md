@@ -22,7 +22,7 @@ Everything here needs a human: an account login, a legal decision, or the person
       Ownership comes from the contract, not from intent, and the first commit was made
       before the move to the personal laptop, so this check still applies to existing code.
       Keep the approval email.
-- [ ] **Move development to the personal laptop.**
+- [ ] **Move development to the personal laptop.** Full steps: [SETUP_NEW_MACHINE.md](SETUP_NEW_MACHINE.md).
   - [ ] Push the branch: `git push -u origin chore/open-source-readiness`
   - [ ] On the personal laptop: `git clone https://github.com/nishant-ranjan28/jevops.git`
   - [ ] `nvm install && nvm use` (reads `.nvmrc`), then `npm ci`
