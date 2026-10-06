@@ -10,6 +10,18 @@ updates:
       dev-tooling:
         dependency-type: development
         exclude-patterns: ["eslint-config-next", "@types/react", "@types/react-dom"]
+    ignore:
+      # typescript-eslint (via eslint-config-next) does not support TypeScript 7
+      # yet, and ESLint 10 needs the same ecosystem to catch up. Remove these
+      # once eslint-config-next supports them.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      # @types/node should match the oldest supported Node major, not the latest;
+      # bump it by hand when `engines` changes.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
