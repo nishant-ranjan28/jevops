@@ -1,0 +1,23 @@
+name: Feature request
+description: Suggest an improvement or a new capability.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What do you propose?
+    validations:
+      required: true
+  - type: checkboxes
+    id: invariant
+    attributes:
+      label: Design check
+      options:
+        - label: The model still only produces facts; the decision stays computed by Jev.
+          required: true
