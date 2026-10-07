@@ -90,14 +90,15 @@ Everything here needs a human: an account login, a legal decision, or the person
 Do not launch until every box is ticked.
 
 - [x] Written IP clearance in hand (or confirmed not needed).
-- [ ] `main` CI green; `npm audit --omit=dev` shows no high/critical.
-- [ ] Demo URL live, mock-only, loads in under 3 s, all five demo scenarios work.
-- [ ] README renders correctly on GitHub with GIF, badges, and working links.
-- [ ] Code of conduct, contributing guide, security policy visible under Community Standards.
-- [ ] Good-first-issues seeded; roadmap pinned; Discussions enabled.
-- [ ] Fresh-clone test on a clean machine or Codespace: clone → `npm ci` → `npm run dev`
+- [x] `main` CI green; `npm audit --omit=dev` shows no high/critical.
+- [x] Demo URL live, mock-only, loads in under 3 s, all five demo scenarios work.
+- [x] README renders correctly on GitHub with the demo video (GIF fallback), badges, and
+      working links.
+- [x] Code of conduct, contributing guide, security policy visible under Community Standards.
+- [x] Good-first-issues seeded; roadmap pinned; Discussions enabled.
+- [x] Fresh-clone test on a clean machine or Codespace: clone → `npm ci` → `npm run dev`
       works with zero configuration.
-- [ ] History check: `git log -p | grep -iE 'sk-|gsk_|ghp_|github_pat_'` shows only the
+- [x] History check: `git log -p | grep -iE 'sk-|gsk_|ghp_|github_pat_'` shows only the
       fake test token.
 
 ### 4.2 Release v0.1.0
@@ -292,4 +293,4 @@ subreddit per day.
 | 3 — CI and automation | Done |
 | 4 — Presentation | Done: demo live at <https://jevops.vercel.app>, GIF, screenshots, social preview, README top fold |
 | 5 — Contributor on-ramp | Done: labels, starter issues #16–#24, pinned roadmap #25, Discussions |
-| 6 — Release and announce | Planned (this document) |
+| 6 — Release and announce | Launch gates passed; release (§4.2) not started |
