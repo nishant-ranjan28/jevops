@@ -10,7 +10,10 @@ An LLM reads the mess. A deterministic policy engine called **Jev** makes the ca
 application executes it. The LLM only gets the last word on the *explanation* — never on
 the outcome.
 
-![The Error rate breach demo: the model says proceed, rule DEP-ERR-001 vetoes, and Jev returns ROLLBACK](docs/demo.gif)
+https://github.com/user-attachments/assets/96a1cd8c-0207-4dc9-b022-f424d4dd2343
+
+*Error rate breach: the model says proceed, rule `DEP-ERR-001` vetoes, and Jev returns
+ROLLBACK. Video not playing? See the [GIF](docs/demo.gif) or [download the MP4](docs/demo.mp4).*
 
 **[Try the demo →](https://jevops.vercel.app)** No signup, no API key; it runs on the
 deterministic mock model.
