@@ -6,13 +6,9 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-### Added
+## [0.1.0] - 2026-10-07
 
-- Apache-2.0 licence, contributing guide, code of conduct, security policy.
-- GitHub Actions CI (lint, typecheck, test, build on Node 22 and 24) and Dependabot.
-- Issue and pull request templates.
-
-## [0.1.0] - 2026-09-21
+First public release.
 
 ### Added
 
@@ -21,6 +17,18 @@ All notable changes to this project are documented here. The format follows
 - Live PR review against public GitHub pull requests.
 - OpenRouter and Groq providers with failover to a deterministic mock.
 - Decision conflict banner, decision trace drawer, and five one-click demo scenarios.
+- Apache-2.0 licence, contributing guide, code of conduct (Contributor Covenant 2.1), security policy.
+- GitHub Actions CI (lint, typecheck, test, build), CodeQL, and Dependabot.
+- Issue and pull request templates.
+- README demo video, screenshots, and a hosted mock-only demo at <https://jevops.vercel.app>.
+
+### Changed
+
+- Node 24 is the minimum supported version.
+
+### Fixed
+
+- Jev's stance in the conflict banner rendered near-black on the dark background (#24).
 
 [Unreleased]: https://github.com/nishant-ranjan28/jevops/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/nishant-ranjan28/jevops/releases/tag/v0.1.0
