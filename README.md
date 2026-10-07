@@ -181,9 +181,12 @@ is swallowed — and the badge reports who actually answered, e.g. `groq (after 
 The chain always ends with the mock, so a live demo never dies on someone else's outage.
 `GET /api/status` returns the whole chain.
 
-A per-request `model` override applies **only** to the explicitly requested provider, since a
-model id that exists on Groq generally does not exist on OpenRouter; fallbacks use their own
-configured model.
+`/api/analyze` ignores the request's `provider` and `model` fields unless the server sets
+`ALLOW_CLIENT_PROVIDER_OVERRIDE=1`; otherwise any visitor could spend your keys on any model.
+`LLM_PROVIDER=mock` is a lock that no request can override. When overrides are allowed, a
+per-request `model` applies **only** to the explicitly requested provider, since a model id
+that exists on Groq generally does not exist on OpenRouter; fallbacks use their own configured
+model.
 
 Verified working model ids as of testing: OpenRouter `openai/gpt-4o-mini`, Groq
 `openai/gpt-oss-120b`.
@@ -328,6 +331,7 @@ ESM hook that resolves the `@/` alias and extensionless imports.
 | `divergence.test.mts` | Conflict detection in both directions |
 | `json.test.mts` | Fenced, prose-wrapped, and malformed model output |
 | `live-provider.test.mts` | The live provider path end to end against a local OpenAI-compatible server |
+| `provider-lock.test.mts` | `LLM_PROVIDER=mock` cannot be overridden, and request `provider`/`model` are ignored unless opted in |
 | `github-url.test.mts` | URL parsing: canonical, shorthand, and every rejection path |
 | `live-pr.test.mts` | The whole live-PR pipeline against fake GitHub + fake model, including every failure mode and the schema retry |
 | `real-pr.integration.test.mts` | A **real** public pull request fetched from github.com |
@@ -372,7 +376,9 @@ hour per server IP. Setting `GITHUB_TOKEN` raises that to 5000 — use a fine-gr
 with no repository permissions beyond public read.
 
 If you do put live keys on a public deployment, add rate limiting and set a spend limit
-with your provider first.
+with your provider first, and leave `ALLOW_CLIENT_PROVIDER_OVERRIDE` unset so visitors cannot
+pick the model. `GET /api/status` lists every provider with a key in `configured`, even in
+mock mode, so you can confirm a demo holds no keys.
 
 ---
 
