@@ -55,13 +55,13 @@ Everything here needs a human: an account login, a legal decision, or the person
   - Optional: `GITHUB_TOKEN` (fine-grained, public read only) so Live PR review does not
     hit the 60/hour anonymous limit.
   - Check `GET /api/status` on the deployed URL reports mock only.
-- [ ] **Record the hero GIF** (10–15 s): click *Error rate breach* → pipeline runs → the
+- [x] **Record the hero GIF** (10–15 s): click *Error rate breach* → pipeline runs → the
       conflict banner names `DEP-ERR-001` → Jev returns **ROLLBACK**. Keep it under 5 MB;
       save as `docs/demo.gif`.
-- [ ] **Screenshots** for the README and posts: decision card, conflict banner, trace drawer.
-- [ ] **Social preview image** (1280×640): name, one-line pitch, the verdict card. Upload
+- [x] **Screenshots** for the README and posts: decision card, conflict banner, trace drawer.
+- [x] **Social preview image** (1280×640): name, one-line pitch, the verdict card. Upload
       under Settings → General → Social preview.
-- [ ] **README top fold**: pitch → GIF → "Try the demo" link → Quickstart. Move deep
+- [x] **README top fold**: pitch → GIF → "Try the demo" link → Quickstart. Move deep
       sections (containment guarantees, architecture, tests) to `docs/` if the top fold
       runs long.
 
@@ -289,6 +289,6 @@ subreddit per day.
 | 1 — Repo hygiene | Done |
 | 2 — Community files | Done |
 | 3 — CI and automation | Done |
-| 4 — Presentation | In progress: demo live at <https://jevops.vercel.app>; GIF, screenshots, social preview and README top fold left |
+| 4 — Presentation | Done: demo live at <https://jevops.vercel.app>, GIF, screenshots, social preview, README top fold |
 | 5 — Contributor on-ramp | In progress: Discussions on; labels, starter issues and roadmap left |
 | 6 — Release and announce | Planned (this document) |
