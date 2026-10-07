@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-07
+
 ### Security
 
 - `/api/analyze` ignored `LLM_PROVIDER=mock` when a request named a provider, and accepted any
@@ -37,5 +39,6 @@ First public release.
 
 - Jev's stance in the conflict banner rendered near-black on the dark background (#24).
 
-[Unreleased]: https://github.com/nishant-ranjan28/jevops/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/nishant-ranjan28/jevops/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/nishant-ranjan28/jevops/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/nishant-ranjan28/jevops/releases/tag/v0.1.0
