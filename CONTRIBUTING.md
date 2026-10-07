@@ -13,7 +13,7 @@ results look.
 
 ## Getting started
 
-Requires Node 22.6+ (`.nvmrc` pins the version we develop on).
+Requires Node 24 (`.nvmrc` pins the version).
 
 ```bash
 git clone https://github.com/nishant-ranjan28/jevops.git
@@ -34,7 +34,7 @@ npm test
 npm run build
 ```
 
-CI runs the same four commands on Node 22 and 24.
+CI runs the same four commands on Node 24.
 
 ## Ways to contribute
 

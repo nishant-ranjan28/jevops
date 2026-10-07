@@ -15,7 +15,7 @@ Never write API keys into tracked files; only `.env.local`, which git ignores.
 |---|---|---|
 | git | any recent | `git --version` |
 | nvm (or fnm / volta) | any | `command -v nvm` |
-| Node.js | 24 (from `.nvmrc`); minimum 22.6 | `node -v` |
+| Node.js | 24 (from `.nvmrc`) | `node -v` |
 | GitHub CLI (optional) | any | `gh --version` |
 
 macOS install, if missing:
@@ -133,7 +133,7 @@ Restart `npm run dev`. Check: the header badge says **LIVE** and names the provi
 | Symptom | Fix |
 |---|---|
 | `npm error ... EACCES` / "run `sudo chown -R`" | npm cache has root-owned files: `sudo chown -R "$(id -u):$(id -g)" ~/.npm` |
-| Tests fail with syntax errors on `.mts` files | Node is older than 22.6 — run `nvm use` |
+| Tests fail with syntax errors on `.mts` files | Node is older than 24 — run `nvm use` |
 | `fetch failed` behind a corporate or VPN proxy | Set `HTTPS_PROXY` and run with `NODE_USE_ENV_PROXY=1` (the `test` script already does) |
 | Real-PR tests skipped | GitHub unreachable or rate-limited; set `GITHUB_TOKEN` in the shell to raise the quota |
 | Port 3000 in use | `npm run dev -- -p 3001` |

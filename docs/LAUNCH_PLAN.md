@@ -16,7 +16,7 @@ Everything here needs a human: an account login, a legal decision, or the person
 
 ### Ownership and environment
 
-- [ ] **Confirm IP ownership in writing.** Read the employment agreement's IP / inventions /
+- [x] **Confirm IP ownership in writing.** Read the employment agreement's IP / inventions /
       outside-activities clauses. If they reach personal projects at all, get a written
       release from HR or Legal ("approval to publish a personal project under Apache-2.0").
       Ownership comes from the contract, not from intent, and the first commit was made
@@ -90,8 +90,8 @@ Everything here needs a human: an account login, a legal decision, or the person
 
 Do not launch until every box is ticked.
 
-- [ ] Written IP clearance in hand (or confirmed not needed).
-- [ ] Repo still private; `main` CI green; `npm audit --omit=dev` shows no high/critical.
+- [x] Written IP clearance in hand (or confirmed not needed).
+- [ ] `main` CI green; `npm audit --omit=dev` shows no high/critical.
 - [ ] Demo URL live, mock-only, loads in under 3 s, all five demo scenarios work.
 - [ ] README renders correctly on GitHub with GIF, badges, and working links.
 - [ ] Code of conduct, contributing guide, security policy visible under Community Standards.
@@ -108,8 +108,7 @@ Do not launch until every box is ticked.
 2. Commit `chore(release): v0.1.0`, merge to `main`.
 3. Tag and push: `git tag -a v0.1.0 -m "v0.1.0" && git push origin v0.1.0`.
 4. Create the GitHub Release from the tag using the notes in §5.1.
-5. **Make the repository public** (Settings → General → Danger Zone → Change visibility).
-6. Re-check the public view in a logged-out browser: README, Release, demo link, issues.
+5. Re-check the public view in a logged-out browser: README, Release, demo link, issues.
 
 ### 4.3 Timeline
 
@@ -117,8 +116,8 @@ Do not launch until every box is ticked.
 |---|---|
 | T−7 days | Phases 4–5 finished. Ask 3–5 people to try the demo cold and tell you what confused them. Fix the top issues. |
 | T−3 days | Write the blog post (§5.2). Prepare posts (§5.3–5.6). Pick launch day: Tue–Thu. |
-| T−1 day | Run the launch gates. Tag and release (repo still private until morning). |
-| T−0, 08:00–09:00 US Eastern | Make the repo public. Publish the blog post. Post Show HN. |
+| T−1 day | Run the launch gates. Tag and release. |
+| T−0, 08:00–09:00 US Eastern | Publish the blog post. Post Show HN. |
 | T−0, +1 h | LinkedIn and X posts, linking the repo (and the HN thread if it is getting traction). |
 | T−0, all day | Stay at the keyboard: answer every HN comment and issue within the hour. |
 | T+1 | Reddit posts, one subreddit per day, each tailored to that community. |
@@ -288,7 +287,7 @@ subreddit per day.
 
 | Phase | Status |
 |---|---|
-| 0 — Ownership, licence, demo safety | Licence done; IP clearance pending (§1) |
+| 0 — Ownership, licence, demo safety | Done (licence, IP clearance); repo is public |
 | 1 — Repo hygiene | Done |
 | 2 — Community files | Done, except code of conduct (§1) |
 | 3 — CI and automation | Done; repo security settings pending (§1) |
