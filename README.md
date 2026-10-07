@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/nishant-ranjan28/jevops/actions/workflows/ci.yml/badge.svg)](https://github.com/nishant-ranjan28/jevops/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![Node](https://img.shields.io/badge/node-%3E%3D22.6-brightgreen.svg)](.nvmrc)
+[![Node](https://img.shields.io/badge/node-%3E%3D24-brightgreen.svg)](.nvmrc)
 
 **An AI-powered engineering decision cockpit.**
 
@@ -118,7 +118,7 @@ window.
 
 ## Setup
 
-Requires Node 22.6+ (developed on Node 24 — see `.nvmrc`).
+Requires Node 24 (see `.nvmrc`).
 
 ```bash
 npm install
