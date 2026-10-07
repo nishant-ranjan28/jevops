@@ -67,8 +67,9 @@ Everything here needs a human: an account login, a legal decision, or the person
 
 ## 3. Phase 5 — Contributor on-ramp (prerequisite)
 
-- [ ] Create labels: `good first issue`, `help wanted`, `policy`, `provider`, `ui`, `docs`.
-- [ ] Seed 6–10 issues, each with context, the files to touch, and a definition of done:
+- [x] Create labels: `good first issue`, `help wanted`, `policy`, `provider`, `ui`, `docs`
+      (reused the existing `documentation` label instead of `docs`).
+- [x] Seed 6–10 issues (#16–#24), each with context, the files to touch, and a definition of done:
   - Ollama / local OpenAI-compatible provider (`provider`, good first issue)
   - Dockerfile + `docker compose up` quickstart (good first issue)
   - New mode: Dependency Upgrade Risk (`policy`, help wanted)
@@ -77,7 +78,7 @@ Everything here needs a human: an account login, a legal decision, or the person
   - Wire the PR action to post a real GitHub PR comment (opt-in, token-gated)
   - Export a decision trace as JSON / Markdown (good first issue)
   - Keyboard shortcuts for the demo rail (`ui`, good first issue)
-- [ ] Pin a **Roadmap** issue (or `ROADMAP.md`) listing v0.2 themes.
+- [x] Pin a **Roadmap** issue (#25) (or `ROADMAP.md`) listing v0.2 themes.
 - [x] Discussions categories: Q&A, Ideas, Show and tell.
 
 ---
@@ -290,5 +291,5 @@ subreddit per day.
 | 2 — Community files | Done |
 | 3 — CI and automation | Done |
 | 4 — Presentation | Done: demo live at <https://jevops.vercel.app>, GIF, screenshots, social preview, README top fold |
-| 5 — Contributor on-ramp | In progress: Discussions on; labels, starter issues and roadmap left |
+| 5 — Contributor on-ramp | Done: labels, starter issues #16–#24, pinned roadmap #25, Discussions |
 | 6 — Release and announce | Planned (this document) |
