@@ -5,9 +5,6 @@ hygiene, community files, CI) are done on branch `chore/open-source-readiness`. 
 document covers what is left: the owner's to-do list, Phases 4–5 as prerequisites, and the
 full Phase 6 release and announcement plan.
 
-> Delete this file (or move it out of the repo) before making the repository public if you
-> would rather not publish the plan itself.
-
 ---
 
 ## 1. Left for me
