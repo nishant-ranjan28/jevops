@@ -19,35 +19,36 @@ Everything here needs a human: an account login, a legal decision, or the person
       Ownership comes from the contract, not from intent, and the first commit was made
       before the move to the personal laptop, so this check still applies to existing code.
       Keep the approval email.
-- [ ] **Move development to the personal laptop.** Full steps: [SETUP_NEW_MACHINE.md](SETUP_NEW_MACHINE.md).
-  - [ ] Push the branch: `git push -u origin chore/open-source-readiness`
-  - [ ] On the personal laptop: `git clone https://github.com/nishant-ranjan28/jevops.git`
-  - [ ] `nvm install && nvm use` (reads `.nvmrc`), then `npm ci`
-  - [ ] `git config user.email nishantranjan78@gmail.com` (personal identity, per repo or global)
-  - [ ] Verify: `npm run lint && npm run typecheck && npm test && npm run build`
-  - [ ] From then on, commit only from the personal laptop with personal accounts
+- [x] **Move development to the personal laptop.** Full steps: [SETUP_NEW_MACHINE.md](SETUP_NEW_MACHINE.md).
+  - [x] Push the branch: `git push -u origin chore/open-source-readiness`
+  - [x] On the personal laptop: `git clone https://github.com/nishant-ranjan28/jevops.git`
+  - [x] `nvm install && nvm use` (reads `.nvmrc`), then `npm ci`
+  - [x] `git config user.email nishantranjan78@gmail.com` (personal identity, per repo or global)
+  - [x] Verify: `npm run lint && npm run typecheck && npm test && npm run build`
+  - [x] From then on, commit only from the personal laptop with personal accounts
         (GitHub, Vercel, LLM providers). No company credentials, code, or data in the repo.
 
 ### Repo housekeeping (left over from Phases 1–3)
 
-- [ ] Delete the empty untracked `.env.example` in the old working copy (`rm .env.example`).
+- [x] Delete the empty untracked `.env.example` in the old working copy (`rm .env.example`).
       Not an issue on a fresh clone.
-- [ ] Open and merge the PR for `chore/open-source-readiness`; confirm CI is green on `main`.
+- [x] Open and merge the PR for `chore/open-source-readiness`; confirm CI is green on `main`.
 - [x] Add a code of conduct: GitHub → **Insights → Community Standards → Code of conduct →
       Add** → Contributor Covenant. Use your personal email as the enforcement contact.
-- [ ] Repo settings → **Code security**: enable secret scanning, push protection,
+- [x] Repo settings → **Code security**: enable secret scanning, push protection,
       Dependabot alerts, and CodeQL default setup.
-- [ ] Repo settings → **Branches**: protect `main` — require the `CI` checks, block force
+- [x] Repo settings → **Branches**: protect `main` — require the `CI` checks, block force
       pushes and deletion.
-- [ ] Repo settings → **General**: enable Discussions; set description and website (demo URL).
-- [ ] Topics: `llm`, `policy-engine`, `decision-engine`, `ai-safety`, `devops`, `nextjs`,
+- [x] Repo settings → **General**: enable Discussions; set description and website (demo URL).
+- [x] Topics: `llm`, `policy-engine`, `decision-engine`, `ai-safety`, `devops`, `nextjs`,
       `typescript`, `guardrails`.
 
 ---
 
 ## 2. Phase 4 — Presentation (prerequisite)
 
-- [ ] **Deploy the mock-only demo on Vercel** from the personal account.
+- [x] **Deploy the mock-only demo on Vercel** from the personal account. Live at
+      <https://jevops.vercel.app>.
   - Import the repo; framework preset Next.js; no build overrides needed.
   - Set **no** `OPENROUTER_API_KEY` / `GROQ_API_KEY`. Optionally set `LLM_PROVIDER=mock`
     to pin it explicitly.
@@ -77,7 +78,7 @@ Everything here needs a human: an account login, a legal decision, or the person
   - Export a decision trace as JSON / Markdown (good first issue)
   - Keyboard shortcuts for the demo rail (`ui`, good first issue)
 - [ ] Pin a **Roadmap** issue (or `ROADMAP.md`) listing v0.2 themes.
-- [ ] Discussions categories: Q&A, Ideas, Show and tell.
+- [x] Discussions categories: Q&A, Ideas, Show and tell.
 
 ---
 
@@ -287,7 +288,7 @@ subreddit per day.
 | 0 — Ownership, licence, demo safety | Done (licence, IP clearance); repo is public |
 | 1 — Repo hygiene | Done |
 | 2 — Community files | Done |
-| 3 — CI and automation | Done; repo security settings pending (§1) |
-| 4 — Presentation | Not started |
-| 5 — Contributor on-ramp | Not started |
+| 3 — CI and automation | Done |
+| 4 — Presentation | In progress: demo live at <https://jevops.vercel.app>; GIF, screenshots, social preview and README top fold left |
+| 5 — Contributor on-ramp | In progress: Discussions on; labels, starter issues and roadmap left |
 | 6 — Release and announce | Planned (this document) |
