@@ -10,10 +10,22 @@ An LLM reads the mess. A deterministic policy engine called **Jev** makes the ca
 application executes it. The LLM only gets the last word on the *explanation* — never on
 the outcome.
 
-https://github.com/user-attachments/assets/96a1cd8c-0207-4dc9-b022-f424d4dd2343
+https://github.com/user-attachments/assets/d61dbbd7-ec14-4aa5-943f-3a292ee132ac
 
-*Error rate breach: the model says proceed, rule `DEP-ERR-001` vetoes, and Jev returns
-ROLLBACK. Video not playing? See the [GIF](docs/demo.gif) or [download the MP4](docs/demo.mp4).*
+*A 100-second narrated walkthrough (turn the sound on): a rollout the model wants to ship,
+rule `DEP-ERR-001` vetoing it, the decision trace, bug triage, and a clean rollout. Video not
+playing? [Download the MP4](docs/demo.mp4) or see the [GIF](docs/demo.gif).*
+
+<details>
+<summary>The same demo on a real model (gpt-4o-mini)</summary>
+
+https://github.com/user-attachments/assets/3c54094e-4950-4dc3-bfe0-5a1f2f51033f
+
+The public demo runs on the deterministic mock. This clip runs the same input through
+`openai/gpt-4o-mini`: the model still says proceed, and Jev still returns ROLLBACK.
+[Download the MP4](docs/demo-live.mp4).
+
+</details>
 
 **[Try the demo →](https://jevops.vercel.app)** No signup, no API key; it runs on the
 deterministic mock model.
