@@ -10,6 +10,27 @@ An LLM reads the mess. A deterministic policy engine called **Jev** makes the ca
 application executes it. The LLM only gets the last word on the *explanation* — never on
 the outcome.
 
+![The Error rate breach demo: the model says proceed, rule DEP-ERR-001 vetoes, and Jev returns ROLLBACK](docs/demo.gif)
+
+**[Try the demo →](https://jevops.vercel.app)** No signup, no API key; it runs on the
+deterministic mock model.
+
+## Quickstart
+
+```bash
+git clone https://github.com/nishant-ranjan28/jevops.git
+cd jevops
+npm install
+npm run dev
+```
+
+Open <http://localhost:3000> and click **Error rate breach** in the demo rail. Requires
+Node 24. To run against a real model, see [Setup](#setup).
+
+---
+
+## How it works
+
 ```
 INPUT → LLM ANALYSIS → STRUCTURED FACTS → JEV DECISION → ACTION → LLM EXPLANATION
 ```
@@ -85,13 +106,19 @@ and it updates per run. If a live call fails mid-analysis, the badge flips to MO
 **Decision card** — the focal point: verdict, animated risk ring, severity, Jev confidence,
 extraction quality, the typed decision fields, and a hard-veto strip when one fired.
 
+![Decision card showing a ROLLBACK verdict with deployment pressure 79 and a hard veto from DEP-ERR-001](docs/screenshots/decision-card.png)
+
 **Conflict banner** — when the model and the policy disagree, a full-width alert states
 `Decision conflict detected`, strikes through the model's stance, shows Jev's, and names the
 responsible rule and the threshold it crossed.
 
+![Conflict banner: the model's PROCEED is struck through and DEP-ERR-001 is named as a hard veto](docs/screenshots/conflict-banner.png)
+
 **Decision trace drawer** — six numbered steps: LLM facts (with any schema repairs) → Jev
 rules fired → the score arithmetic → veto/threshold → final decision → deterministic action.
 Open it from the decision card or the conflict banner; `Esc` closes it.
+
+<img src="docs/screenshots/trace-drawer.png" alt="Decision trace drawer listing the fired rules, the score arithmetic, the veto and the final decision" width="560">
 
 **Policy trace** — the fired rules with weights and flags, collapsed to the top four with the
 rest one click away, and the veto row highlighted.
