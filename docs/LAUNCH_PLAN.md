@@ -33,7 +33,7 @@ Everything here needs a human: an account login, a legal decision, or the person
 - [ ] Delete the empty untracked `.env.example` in the old working copy (`rm .env.example`).
       Not an issue on a fresh clone.
 - [ ] Open and merge the PR for `chore/open-source-readiness`; confirm CI is green on `main`.
-- [ ] Add a code of conduct: GitHub → **Insights → Community Standards → Code of conduct →
+- [x] Add a code of conduct: GitHub → **Insights → Community Standards → Code of conduct →
       Add** → Contributor Covenant. Use your personal email as the enforcement contact.
 - [ ] Repo settings → **Code security**: enable secret scanning, push protection,
       Dependabot alerts, and CodeQL default setup.
@@ -286,7 +286,7 @@ subreddit per day.
 |---|---|
 | 0 — Ownership, licence, demo safety | Done (licence, IP clearance); repo is public |
 | 1 — Repo hygiene | Done |
-| 2 — Community files | Done, except code of conduct (§1) |
+| 2 — Community files | Done |
 | 3 — CI and automation | Done; repo security settings pending (§1) |
 | 4 — Presentation | Not started |
 | 5 — Contributor on-ramp | Not started |
