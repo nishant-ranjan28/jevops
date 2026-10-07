@@ -96,7 +96,7 @@ Do not launch until every box is ticked.
       working links.
 - [x] Code of conduct, contributing guide, security policy visible under Community Standards.
 - [x] Good-first-issues seeded; roadmap pinned; Discussions enabled.
-- [ ] Fresh-clone test on a clean machine or Codespace: clone → `npm ci` → `npm run dev`
+- [x] Fresh-clone test on a clean machine or Codespace: clone → `npm ci` → `npm run dev`
       works with zero configuration.
 - [x] History check: `git log -p | grep -iE 'sk-|gsk_|ghp_|github_pat_'` shows only the
       fake test token.
@@ -293,4 +293,4 @@ subreddit per day.
 | 3 — CI and automation | Done |
 | 4 — Presentation | Done: demo live at <https://jevops.vercel.app>, GIF, screenshots, social preview, README top fold |
 | 5 — Contributor on-ramp | Done: labels, starter issues #16–#24, pinned roadmap #25, Discussions |
-| 6 — Release and announce | Launch gates: 7 of 8 passed (Codespace fresh-clone test pending); release not started |
+| 6 — Release and announce | Launch gates passed; release (§4.2) not started |
