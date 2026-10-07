@@ -44,7 +44,7 @@ export function ConflictBanner({
             </span>
             <span aria-hidden className="text-dim">→</span>
             <span className="text-dim text-[11px] tracking-[0.14em] uppercase">Jev</span>
-            <span className="text-bad text-base font-semibold">
+            <span className="text-bad text-[1rem] font-semibold">
               {STANCE_LABEL[divergence.jevStance]}
             </span>
             <span className="border-bad/40 text-bad rounded border px-1.5 py-px text-[10px]">
