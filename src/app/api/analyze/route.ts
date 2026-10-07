@@ -37,6 +37,9 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const live = typeof prUrl === 'string' && prUrl.trim().length > 0;
+  // Per-request provider and model choices would let any visitor spend the
+  // server's keys on any model, so they are honoured only when opted in.
+  const allowOverrides = process.env.ALLOW_CLIENT_PROVIDER_OVERRIDE === '1';
 
   if (live) {
     if ((prUrl as string).length > MAX_PR_URL) {
@@ -71,8 +74,8 @@ export async function POST(request: Request): Promise<Response> {
           mode,
           input: typeof input === 'string' ? input : '',
           prUrl: live ? (prUrl as string) : undefined,
-          providerOverride: typeof provider === 'string' ? provider : undefined,
-          modelOverride: typeof model === 'string' ? model : undefined,
+          providerOverride: allowOverrides && typeof provider === 'string' ? provider : undefined,
+          modelOverride: allowOverrides && typeof model === 'string' ? model : undefined,
           signal: request.signal,
         })) {
           if (event.type === 'meta') pace = event.meta.source === 'mock';

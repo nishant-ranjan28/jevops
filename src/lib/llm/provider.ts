@@ -141,6 +141,9 @@ export interface ProviderChain {
  *   2. the other configured provider
  *   3. the deterministic mock
  *
+ * `LLM_PROVIDER=mock` is a lock: a per-request override cannot leave mock mode,
+ * so a deployment pinned to mock never spends a configured key.
+ *
  * Keys are read server-side only and never returned to the client.
  *
  * `modelOverride` applies only to the explicitly requested provider — a model
@@ -151,18 +154,23 @@ export function resolveProviderChain(
   preferred?: string,
   modelOverride?: string,
 ): ProviderChain {
-  const requested = (preferred ?? env('LLM_PROVIDER') ?? '').toLowerCase();
+  const pinned = env('LLM_PROVIDER')?.toLowerCase();
+  const requested = pinned === 'mock' ? 'mock' : (preferred ?? pinned ?? '').toLowerCase();
   const override = modelOverride?.trim() || undefined;
+
+  const openrouterKey = env('OPENROUTER_API_KEY');
+  const groqKey = env('GROQ_API_KEY');
 
   if (requested === 'mock') {
     return {
       chain: [{ provider: mockProvider, reason: 'Mock mode requested explicitly.' }],
-      configured: [],
+      // Report keys even in mock mode, so status never hides a configured key.
+      configured: [
+        ...(openrouterKey ? (['openrouter'] as const) : []),
+        ...(groqKey ? (['groq'] as const) : []),
+      ],
     };
   }
-
-  const openrouterKey = env('OPENROUTER_API_KEY');
-  const groqKey = env('GROQ_API_KEY');
 
   const buildOpenRouter = (useOverride: boolean): ProviderResolution | null => {
     if (!openrouterKey) return null;

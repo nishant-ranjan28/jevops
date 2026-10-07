@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Security
+
+- `/api/analyze` ignored `LLM_PROVIDER=mock` when a request named a provider, and accepted any
+  `model`, so a deployment with keys could be made to spend them. `LLM_PROVIDER=mock` is now a
+  lock, request `provider`/`model` are ignored unless `ALLOW_CLIENT_PROVIDER_OVERRIDE=1`, and
+  `/api/status` reports configured keys even in mock mode.
+
 ## [0.1.0] - 2026-10-07
 
 First public release.
