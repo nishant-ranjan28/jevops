@@ -112,18 +112,20 @@ Do not launch until every box is ticked.
 
 ### 4.3 Timeline
 
-| When | What |
-|---|---|
-| T−7 days | Phases 4–5 finished. Ask 3–5 people to try the demo cold and tell you what confused them. Fix the top issues. |
-| T−3 days | Write the blog post (§5.2). Prepare posts (§5.3–5.6). Pick launch day: Tue–Thu. |
-| T−1 day | Run the launch gates. Tag and release. |
-| T−0, 08:00–09:00 US Eastern | Publish the blog post. Post Show HN. |
-| T−0, +1 h | LinkedIn and X posts, linking the repo (and the HN thread if it is getting traction). |
-| T−0, all day | Stay at the keyboard: answer every HN comment and issue within the hour. |
-| T+1 | Reddit posts, one subreddit per day, each tailored to that community. |
-| T+2 to T+3 | dev.to / Hashnode cross-post with a canonical link to the original. |
-| T+7 | Retrospective (§4.6). Ship v0.1.1 with launch-week fixes. |
-| T+14 | Announce v0.2 roadmap; thank first contributors publicly. |
+Launch day: **Wednesday 14 October 2026**, 08:00–09:00 US Eastern.
+
+| When | Date | What |
+|---|---|---|
+| T−7 days | Wed 7 Oct | Phases 4–5 finished. Ask 3–5 people to try the demo cold and tell you what confused them. Fix the top issues. |
+| T−3 days | Sun 11 Oct | Write the blog post (§5.2). Prepare posts (§5.3–5.6). |
+| T−1 day | Tue 13 Oct | Re-check the launch gates and the demo. (v0.1.0 and the v0.1.1 security fix were tagged and released early, on 7 Oct.) |
+| T−0, 08:00–09:00 US Eastern | Wed 14 Oct | Publish the blog post. Post Show HN. |
+| T−0, +1 h | Wed 14 Oct | LinkedIn and X posts, linking the repo (and the HN thread if it is getting traction). |
+| T−0, all day | Wed 14 Oct | Stay at the keyboard: answer every HN comment and issue within the hour. |
+| T+1 | Thu 15 Oct onward | Reddit posts, one subreddit per day, each tailored to that community. |
+| T+2 to T+3 | Fri 16 – Sat 17 Oct | dev.to / Hashnode cross-post with a canonical link to the original. |
+| T+7 | Wed 21 Oct | Retrospective (§4.6). Ship v0.1.2 with launch-week fixes. |
+| T+14 | Wed 28 Oct | Announce v0.2 roadmap; thank first contributors publicly. |
 
 ### 4.4 Launch-day runbook
 
@@ -178,7 +180,7 @@ Replace `<demo-url>` and `<post-url>` before posting.
 > - Field-level schema gate: invalid model output is repaired to policy defaults, visibly
 > - Full decision trace: every rule that fired, its weight, and the arithmetic
 > - OpenRouter → Groq → deterministic mock failover; runs fully offline with no API key
-> - 94 tests on Node's built-in runner, no test framework
+> - 99 tests on Node's built-in runner, no test framework
 >
 > **Try it:** <demo-url> · **Run it:** `npm install && npm run dev`
 >
@@ -293,4 +295,4 @@ subreddit per day.
 | 3 — CI and automation | Done |
 | 4 — Presentation | Done: demo live at <https://jevops.vercel.app>, GIF, screenshots, social preview, README top fold |
 | 5 — Contributor on-ramp | Done: labels, starter issues #16–#24, pinned roadmap #25, Discussions |
-| 6 — Release and announce | Launch gates passed; release (§4.2) not started |
+| 6 — Release and announce | Gates passed; v0.1.0 and v0.1.1 released 7 Oct; launch Wed 14 Oct |
