@@ -86,7 +86,7 @@ Expected:
 
 - lint: no output after `> eslint`
 - typecheck: `✓ Types generated successfully`, no `tsc` errors
-- test: `ℹ pass 116`, `ℹ fail 0` (the real-PR tests may show as skipped if GitHub is
+- test: `ℹ pass 117`, `ℹ fail 0` (the real-PR tests may show as skipped if GitHub is
   unreachable or rate-limited — that is fine)
 - build: route table listing `/`, `/api/analyze`, `/api/status`
 

@@ -50,7 +50,9 @@ export interface PrCommentInput {
   meta: Pick<AnalysisMeta, 'source' | 'servedBy' | 'model'>;
 }
 
-const cell = (s: string) => s.replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
+// Backslashes first, so an input "\|" cannot turn our escape into "\\|" (a
+// literal backslash followed by a bare pipe that splits the cell).
+const cell = (s: string) => s.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
 const signed = (n: number) => (n > 0 ? `+${n}` : `${n}`);
 
 /**

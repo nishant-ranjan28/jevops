@@ -173,6 +173,14 @@ test('the comment is deterministic and says the policy decided, not the model', 
   assert.doesNotMatch(body, /\d{4}-\d{2}-\d{2}T/, 'no timestamps');
 });
 
+test('a backslash before a pipe cannot break out of a table cell', () => {
+  const body = formatPrComment({
+    ...input,
+    decision: { ...decision, fields: [{ label: 'Path', value: 'C:\\temp\\|x', tone: 'neutral' }] },
+  });
+  assert.ok(body.includes('| Path | C:\\\\temp\\\\\\|x |'), 'backslashes and the pipe are both escaped');
+});
+
 test('an agreeing model is reported as matching', () => {
   const body = formatPrComment({ ...input, divergence: { ...divergence, agree: true, delta: 0, llmStance: 'BLOCK' } });
   assert.match(body, /The model's recommendation \(BLOCK\) matches the policy\./);
