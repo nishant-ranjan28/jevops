@@ -162,9 +162,10 @@ self-hosted `OLLAMA_BASE_URL`) go on the step's `env:`.
 
 - The action reads the pull request through the API. It never checks out, builds or runs
   the change, and it only comments in the repository the workflow runs in.
-- **Use a model key.** The mock matches keywords in the pull request text, so on a real
-  pull request it can veto a migration that is not there. A run without a key says so in a
-  notice.
+- **Use a model key.** Without one, the mock reads keywords from the title and description
+  and facts from the changed file paths (migrations, tests, CI, lockfiles). It never reads
+  the patches, but it does not understand the change either. A run without a key says so in
+  a notice.
 - Pull requests from forks get a read-only token and no secrets, so they run on the mock and
   the comment is skipped with a warning; the check itself does not fail for that.
 - The decision is only as good as the extracted facts, and the facts come from text the
@@ -431,6 +432,7 @@ ESM hook that resolves the `@/` alias and extensionless imports.
 | `live-pr.test.mts` | The whole live-PR pipeline against fake GitHub + fake model, including every failure mode and the schema retry |
 | `pr-comment.test.mts` | The opt-in PR comment: deterministic formatting, the flag + token + allowlist gate, create vs edit-in-place, and a refused write failing the action, not the run |
 | `action.test.mts` | The GitHub Action: which pull request it reviews, input mapping, outputs and summary, `fail-on`, and a refused comment staying a warning |
+| `mock-pr.test.mts` | The mock on live pull requests: facts from the title, description and file paths, never the patches; security fixes; pasted demos unchanged |
 | `real-pr.integration.test.mts` | A **real** public pull request fetched from github.com |
 
 The live-provider suite starts a real HTTP server and exercises the actual transport for both

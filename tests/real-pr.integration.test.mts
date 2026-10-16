@@ -133,6 +133,13 @@ test('runs the full pipeline over the real PR', { timeout: TIMEOUT }, async (t) 
   // This PR adds regression tests, which the extractor should see.
   assert.equal(result.rawFacts.hasTests, true);
 
+  // It is an SSRF fix: it must get a security review, and nothing in its
+  // patches may be read as a migration.
+  assert.equal(result.rawFacts.addressesSecurityIssue, true);
+  assert.ok(result.trace.some((r) => r.id === 'PR-SEC-005'));
+  assert.ok(result.decision.requiredActions.includes('Request sign-off from the security review group'));
+  assert.equal(result.rawFacts.hasDatabaseMigration, false);
+
   // Every fired rule is traceable.
   for (const rule of result.trace) {
     assert.match(rule.id, /^PR-[A-Z]+-\d{3}$/);
