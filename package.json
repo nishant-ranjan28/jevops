@@ -1,6 +1,6 @@
 {
   "name": "jevops",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
   "description": "An engineering decision cockpit where the LLM reads the mess and a deterministic policy engine makes the call.",
   "license": "Apache-2.0",
