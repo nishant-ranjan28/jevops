@@ -7,7 +7,7 @@ branding:
 
 inputs:
   github-token:
-    description: Token used to read the pull request and post the comment. Posting needs "pull-requests: write".
+    description: 'Token used to read the pull request and post the comment. Posting needs "pull-requests: write".'
     default: ${{ github.token }}
   pull-request:
     description: The pull request to review (URL or owner/repo#123). Defaults to the one that triggered the workflow.
