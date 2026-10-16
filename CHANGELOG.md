@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-16
+
 ### Added
 
 - Local model provider: `LLM_PROVIDER=ollama` runs JevOps on Ollama, LM Studio or a llama.cpp
@@ -25,17 +27,17 @@ All notable changes to this project are documented here. The format follows
   fixes a vulnerability (SSRF, XSS, CVE, ...) requires a security review even when it touches no
   auth or crypto code (#42).
 
-### Security
-
-- The mock's number-extraction regexes had unbounded, overlapping quantifiers. A crafted 24k-character
-  input (the `/api/analyze` limit) took 2-4.5 s of CPU per request, so the public demo could be
-  tied up cheaply. The quantifiers are bounded; the same inputs now take milliseconds (#42).
-
 ### Fixed
 
 - The mock read keywords from a live pull request's patches, so test fixtures quoting migration
   text vetoed PRs with no migration, and Dependabot bumps were blocked. It now reads the title and
   description for claims and the changed file paths for structure. Pasted demos are unchanged (#42).
+
+### Security
+
+- The mock's number-extraction regexes had unbounded, overlapping quantifiers. A crafted 24k-character
+  input (the `/api/analyze` limit) took 2-4.5 s of CPU per request, so the public demo could be
+  tied up cheaply. The quantifiers are bounded; the same inputs now take milliseconds (#42).
 
 ## [0.1.1] - 2026-10-07
 
@@ -70,6 +72,7 @@ First public release.
 
 - Jev's stance in the conflict banner rendered near-black on the dark background (#24).
 
-[Unreleased]: https://github.com/nishant-ranjan28/jevops/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/nishant-ranjan28/jevops/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/nishant-ranjan28/jevops/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/nishant-ranjan28/jevops/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/nishant-ranjan28/jevops/releases/tag/v0.1.0

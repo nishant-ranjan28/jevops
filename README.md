@@ -142,7 +142,7 @@ jobs:
   review:
     runs-on: ubuntu-latest
     steps:
-      - uses: nishant-ranjan28/jevops@main   # pin a release tag or commit SHA once one ships the action
+      - uses: nishant-ranjan28/jevops@v0.2.0   # or a commit SHA for an immutable pin
         with:
           openrouter-api-key: ${{ secrets.OPENROUTER_API_KEY }}
           fail-on: block                     # never (default), guardrails, hold or block
