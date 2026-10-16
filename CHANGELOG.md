@@ -25,6 +25,12 @@ All notable changes to this project are documented here. The format follows
   fixes a vulnerability (SSRF, XSS, CVE, ...) requires a security review even when it touches no
   auth or crypto code (#42).
 
+### Security
+
+- The mock's number-extraction regexes had unbounded, overlapping quantifiers. A crafted 24k-character
+  input (the `/api/analyze` limit) took 2-4.5 s of CPU per request, so the public demo could be
+  tied up cheaply. The quantifiers are bounded; the same inputs now take milliseconds (#42).
+
 ### Fixed
 
 - The mock read keywords from a live pull request's patches, so test fixtures quoting migration

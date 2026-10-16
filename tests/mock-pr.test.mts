@@ -165,3 +165,18 @@ test('pasted text is read whole, exactly as before', () => {
   assert.ok(ledger);
   assert.equal(mockExtract('pr-risk', ledger.text).raw.hasDatabaseMigration, true);
 });
+
+test('number extraction stays fast on adversarial input', () => {
+  // Unbounded quantifiers here once took 2-4 s per 24k-character request
+  // (the /api/analyze limit). Bounded, every case is a few milliseconds.
+  const N = 24_000;
+  const inputs = ['9' + '0'.repeat(N), '9'.repeat(N), '9' + ' '.repeat(N), 'errorrate' + '.'.repeat(N), 'p95' + '.'.repeat(N)];
+  for (const input of inputs) {
+    for (const mode of ['pr-risk', 'bug-triage', 'deploy-gate'] as const) {
+      const started = performance.now();
+      mockExtract(mode, input);
+      const ms = performance.now() - started;
+      assert.ok(ms < 500, `${mode} on ${JSON.stringify(input.slice(0, 12))}… took ${ms.toFixed(0)} ms`);
+    }
+  }
+});

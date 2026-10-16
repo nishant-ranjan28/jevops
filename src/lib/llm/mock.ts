@@ -115,9 +115,9 @@ function mockPrRisk(input: string): MockExtraction {
   const unknowns: string[] = [];
   const anyFile = (pattern: RegExp) => files !== null && files.some((f) => pattern.test(f));
 
-  const filesChanged = num(header, /(\d[\d,]*)\s*files?\s*(?:changed|modified|touched)/i);
-  const linesAdded = num(header, /\+\s*(\d[\d,]*)|(\d[\d,]*)\s*insertions?/i);
-  const linesRemoved = num(header, /-\s*(\d[\d,]*)\s*(?:lines|deletions)|(\d[\d,]*)\s*deletions?/i);
+  const filesChanged = num(header, /(\d[\d,]{0,12})\s{0,5}files?\s{0,5}(?:changed|modified|touched)/i);
+  const linesAdded = num(header, /\+\s{0,5}(\d[\d,]{0,12})|(\d[\d,]{0,12})\s{0,5}insertions?/i);
+  const linesRemoved = num(header, /-\s{0,5}(\d[\d,]{0,12})\s{0,5}(?:lines|deletions)|(\d[\d,]{0,12})\s{0,5}deletions?/i);
   if (filesChanged === null) unknowns.push('filesChanged');
   if (linesAdded === null) unknowns.push('linesAdded');
 
@@ -265,7 +265,7 @@ function mockBugTriage(input: string): MockExtraction {
   const t = input.toLowerCase();
   const unknowns: string[] = [];
 
-  const affectedUserEstimate = num(input, /(\d[\d,]*)\s*(?:users|customers|accounts|tenants)/i);
+  const affectedUserEstimate = num(input, /(\d[\d,]{0,12})\s{0,5}(?:users|customers|accounts|tenants)/i);
   if (affectedUserEstimate === null) unknowns.push('affectedUserEstimate');
 
   const environment = has(t, /\b(prod|production|live)\b/)
@@ -361,36 +361,36 @@ function mockDeployGate(input: string): MockExtraction {
   const t = input.toLowerCase();
   const unknowns: string[] = [];
 
-  const errorRatePct = num(input, /error[ _-]?rate[^0-9%]*([\d.]+)\s*%/i);
+  const errorRatePct = num(input, /error[ _-]?rate[^0-9%]{0,40}([\d.]{1,12})\s{0,5}%/i);
   const baselineErrorRatePct = firstNum(
     input,
-    /(?:versus|vs\.?|against|compared to)\s*(?:an?\s*)?([\d.]+)\s*%\s*baseline/i,
-    /baseline[^0-9%.\n]*([\d.]+)\s*%/i,
+    /(?:versus|vs\.?|against|compared to)\s{0,5}(?:an?\s{0,5})?([\d.]{1,12})\s{0,5}%\s{0,5}baseline/i,
+    /baseline[^0-9%.\n]{0,40}([\d.]{1,12})\s{0,5}%/i,
   );
-  const p95LatencyMs = num(input, /p9[59][^0-9]*([\d.]+)\s*ms/i);
+  const p95LatencyMs = num(input, /p9[59][^0-9]{0,40}([\d.]{1,12})\s{0,5}ms/i);
   const baselineP95LatencyMs = firstNum(
     input,
-    /(?:versus|vs\.?|against|compared to)\s*(?:an?\s*)?([\d.]+)\s*ms\s*baseline/i,
-    /baseline[^0-9.\n]*p9[59][^0-9]*([\d.]+)\s*ms/i,
+    /(?:versus|vs\.?|against|compared to)\s{0,5}(?:an?\s{0,5})?([\d.]{1,12})\s{0,5}ms\s{0,5}baseline/i,
+    /baseline[^0-9.\n]{0,40}p9[59][^0-9]{0,40}([\d.]{1,12})\s{0,5}ms/i,
   );
-  const cpuSaturationPct = num(input, /cpu[^0-9%]*([\d.]+)\s*%/i);
-  const memorySaturationPct = num(input, /mem(?:ory)?[^0-9%]*([\d.]+)\s*%/i);
+  const cpuSaturationPct = num(input, /cpu[^0-9%]{0,40}([\d.]{1,12})\s{0,5}%/i);
+  const memorySaturationPct = num(input, /mem(?:ory)?[^0-9%]{0,40}([\d.]{1,12})\s{0,5}%/i);
   const failedHealthChecks = countOrZero(
     input,
-    /(\d+)\s*(?:of\s*\d+\s*)?health ?checks?\s*(?:are\s*)?fail/i,
+    /(\d{1,9})\s{0,5}(?:of\s{0,5}\d{1,9}\s{0,5})?health ?checks?\s{0,5}(?:are\s{0,5})?fail/i,
     /\b(?:no|zero)\s+(?:failed\s+)?health ?checks?|health ?checks?\s+(?:are\s+)?(?:all\s+)?(?:passing|green|healthy)/i,
   );
   const activeIncidents = countOrZero(
     input,
-    /(\d+)\s*(?:active|open|ongoing)?\s*incident/i,
-    /\b(?:no|zero)\s+(?:active|open|ongoing)?\s*incidents?/i,
+    /(\d{1,9})\s{0,5}(?:active|open|ongoing)?\s{0,5}incident/i,
+    /\b(?:no|zero)\s+(?:active|open|ongoing)?\s{0,5}incidents?/i,
   );
   const recentRollbacks24h = countOrZero(
     input,
-    /(\d+)\s*rollbacks?/i,
+    /(\d{1,9})\s{0,5}rollbacks?/i,
     /\b(?:no|zero)\s+rollbacks?/i,
   );
-  const trafficShiftedPct = num(input, /(\d[\d.]*)\s*%\s*(?:of\s*(?:the\s*)?)?(?:traffic|fleet)/i);
+  const trafficShiftedPct = num(input, /(\d[\d.]{0,12})\s{0,5}%\s{0,5}(?:of\s{0,5}(?:the\s{0,5})?)?(?:traffic|fleet)/i);
 
   if (errorRatePct === null) unknowns.push('errorRatePct');
   if (p95LatencyMs === null) unknowns.push('p95LatencyMs');
