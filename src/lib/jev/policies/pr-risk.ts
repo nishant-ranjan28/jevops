@@ -26,6 +26,7 @@ export const prRiskFactsSchema = z.object({
   hasDatabaseMigration: z.boolean(),
   hasSchemaChange: z.boolean(),
   touchesAuthOrCrypto: z.boolean(),
+  addressesSecurityIssue: z.boolean(),
   touchesPaymentFlow: z.boolean(),
   handlesPII: z.boolean(),
   addsOrUpdatesDependencies: z.boolean(),
@@ -52,6 +53,7 @@ export const PR_RISK_FACT_DEFAULTS: PrRiskFacts = {
   hasDatabaseMigration: false,
   hasSchemaChange: false,
   touchesAuthOrCrypto: false,
+  addressesSecurityIssue: false,
   touchesPaymentFlow: false,
   handlesPII: false,
   addsOrUpdatesDependencies: false,
@@ -144,6 +146,14 @@ export const prRiskRules: readonly JevRule<PrRiskFacts, PrRiskFlag>[] = [
     weight: 8,
     flags: ['dependency-audit'],
     when: (f) => f.addsOrUpdatesDependencies || f.changeTypes.includes('dependency'),
+  },
+  {
+    id: 'PR-SEC-005',
+    label: 'Change fixes or mitigates a security vulnerability',
+    category: 'security',
+    weight: 14,
+    flags: ['security-review', 'manual-qa'],
+    when: (f) => f.addressesSecurityIssue,
   },
   {
     id: 'PR-DATA-001',
@@ -385,7 +395,7 @@ const STANCE_BY_RELEASE: Record<ReleaseRecommendation, Stance> = {
 
 export const prRiskPolicy: JevPolicy<PrRiskFacts, PrRiskFlag, PrRiskDecision> = {
   id: 'jev.pr-risk',
-  version: '1.2.0',
+  version: '1.3.0',
   title: 'Pull Request Risk Policy',
   rules: prRiskRules,
   derive(facts, ev) {

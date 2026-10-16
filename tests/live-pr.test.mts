@@ -76,6 +76,7 @@ const PR_FACTS = {
   hasDatabaseMigration: true,
   hasSchemaChange: true,
   touchesAuthOrCrypto: false,
+  addressesSecurityIssue: false,
   touchesPaymentFlow: true,
   handlesPII: false,
   addsOrUpdatesDependencies: false,

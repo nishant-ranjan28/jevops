@@ -55,20 +55,91 @@ function optimism(text: string): Stance {
 
 /* ----------------------------------------------------------- PR risk mock */
 
-function mockPrRisk(input: string): MockExtraction {
-  const t = input.toLowerCase();
-  const unknowns: string[] = [];
+/**
+ * A live review hands the mock the prompt from buildPullRequestPrompt. Its
+ * patches are code, and code is full of words like "token", "migration" or
+ * "no tests" (fixtures, comments, strings), so for a pull request the keyword
+ * signals come from the title and description only, and the structural facts
+ * from the changed file paths. Pasted text has no such structure and is read
+ * whole, as before.
+ */
+interface PrSections {
+  /** Where the numeric totals are read from. */
+  header: string;
+  /** The text keyword signals are read from. */
+  prose: string;
+  /** Changed file paths, or null for pasted text. */
+  files: string[] | null;
+}
 
-  const filesChanged = num(input, /(\d[\d,]*)\s*files?\s*(?:changed|modified|touched)/i);
-  const linesAdded = num(input, /\+\s*(\d[\d,]*)|(\d[\d,]*)\s*insertions?/i);
-  const linesRemoved = num(input, /-\s*(\d[\d,]*)\s*(?:lines|deletions)|(\d[\d,]*)\s*deletions?/i);
+function prSections(input: string): PrSections {
+  // The description is author-written and may repeat the headings, but a
+  // patch line starts with +, -, a space or @@, and a file line with "- ". So
+  // the last PATCHES heading is the real one, and the real CHANGED FILES is
+  // the last one before it.
+  const description = input.indexOf('\nDESCRIPTION\n');
+  const patches = input.lastIndexOf('\nPATCHES\n');
+  const changed = patches < 0 ? -1 : input.lastIndexOf('\nCHANGED FILES\n', patches);
+  if (description < 0 || changed <= description) return { header: input, prose: input, files: null };
+
+  const body = input.slice(description + '\nDESCRIPTION\n'.length, changed);
+  const files = input
+    .slice(changed + '\nCHANGED FILES\n'.length, patches)
+    .split('\n')
+    .map((line) => line.match(/^- \S+ (.+) \(\+\d+ \/ -\d+\)$/)?.[1])
+    .filter((path): path is string => path !== undefined);
+  return { header: input.slice(0, description), prose: `${firstLine(input)}\n${body}`, files };
+}
+
+/** What a changed path says about the change, whatever its contents. */
+const PATH = {
+  migration: /(^|\/)(migrations?|migrate|alembic|flyway|liquibase)\/|\.sql$/i,
+  test: /(^|\/)(tests?|__tests__|specs?|e2e|fixtures)\/|[._-](test|spec)\.[^/]+$|(^|\/)test_[^/]+\.py$/i,
+  docs: /\.(md|mdx|rst|adoc)$|(^|\/)docs\/|(^|\/)(license|notice)[^/]*$/i,
+  ci: /^\.github\/workflows\/|^\.gitlab-ci\.yml$|^\.circleci\/|(^|\/)jenkinsfile$|^action\.ya?ml$/i,
+  infra: /(^|\/)(dockerfile|docker-compose[^/]*\.ya?ml)$|(^|\/)(helm|k8s|kubernetes|terraform)\/|\.tf$/i,
+  dependency:
+    /(^|\/)(package(-lock)?\.json|yarn\.lock|pnpm-lock\.yaml|go\.(mod|sum)|cargo\.(toml|lock)|requirements[^/]*\.txt|poetry\.lock|pyproject\.toml|gemfile(\.lock)?|composer\.(json|lock))$/i,
+  auth: /(^|[/_.-])(auth(?!or)|login|session|oauth|jwt|crypto|password)/i,
+  payment: /(^|[/_.-])(payment|billing|stripe|checkout|invoice|refund)/i,
+};
+
+/** Named vulnerability classes. Bare "injection" would match dependency injection. */
+const SECURITY_FIX =
+  /\b(ssrf|xss|csrf|xxe|rce|cve-\d{4}-\d+|cve|vulnerabilit(y|ies)|vulnerable|(sql|command|code|header|html|script|ldap|template) injection|path traversal|directory traversal|open redirect|prototype pollution|security (fix|issue|advisory|patch))\b/;
+
+function mockPrRisk(input: string): MockExtraction {
+  const { header, prose, files } = prSections(input);
+  const t = prose.toLowerCase();
+  const title = firstLine(input);
+  const unknowns: string[] = [];
+  const anyFile = (pattern: RegExp) => files !== null && files.some((f) => pattern.test(f));
+
+  const filesChanged = num(header, /(\d[\d,]{0,12})\s{0,5}files?\s{0,5}(?:changed|modified|touched)/i);
+  const linesAdded = num(header, /\+\s{0,5}(\d[\d,]{0,12})|(\d[\d,]{0,12})\s{0,5}insertions?/i);
+  const linesRemoved = num(header, /-\s{0,5}(\d[\d,]{0,12})\s{0,5}(?:lines|deletions)|(\d[\d,]{0,12})\s{0,5}deletions?/i);
   if (filesChanged === null) unknowns.push('filesChanged');
   if (linesAdded === null) unknowns.push('linesAdded');
 
-  const hasTests = has(t, /\b(test|spec|coverage|vitest|jest|pytest)\b/);
-  const hasDatabaseMigration = has(t, /\b(migration|alter table|drop column|backfill|schema migration)\b/);
-  const touchesAuthOrCrypto = has(t, /\b(auth|login|session|jwt|oauth|token|password|encrypt|crypto)\b/);
-  const touchesPaymentFlow = has(t, /\b(payment|billing|stripe|checkout|invoice|refund|subscription)\b/);
+  // For a pull request the file list is the evidence: a test or migration
+  // either changed or it did not, whatever the description says.
+  const hasTests = files ? anyFile(PATH.test) : has(t, /\b(test|spec|coverage|vitest|jest|pytest)\b/);
+  const hasDatabaseMigration = files
+    ? anyFile(PATH.migration)
+    : has(t, /\b(migration|alter table|drop column|backfill|schema migration)\b/);
+  const touchesAuthOrCrypto =
+    has(t, /\b(auth|login|session|jwt|oauth|token|password|encrypt|crypto)\b/) || anyFile(PATH.auth);
+  const touchesPaymentFlow =
+    has(t, /\b(payment|billing|stripe|checkout|invoice|refund|subscription)\b/) || anyFile(PATH.payment);
+  const addressesSecurityIssue =
+    has(t, SECURITY_FIX) || /^\s*\w+\((sec|security)\)!?:/i.test(title) || /\bsecurity\b/i.test(title);
+  const addsOrUpdatesDependencies = files
+    ? anyFile(PATH.dependency)
+    : has(t, /\b(dependency|dependencies|package\.json|upgrade|bump|lockfile)\b/);
+  const touchesCi = files ? anyFile(PATH.ci) : has(t, /\b(ci|pipeline|workflow|github action)\b/);
+  const touchesInfra = files ? anyFile(PATH.infra) : has(t, /\b(infra|terraform|kubernetes|helm)\b/);
+  const docsOrTestsOnly =
+    files !== null && files.length > 0 && files.every((f) => PATH.docs.test(f) || PATH.test.test(f));
 
   const blastRadius = has(t, /\b(platform-wide|all services|shared library|core module|every service)\b/)
     ? 'system-wide'
@@ -85,13 +156,18 @@ function mockPrRisk(input: string): MockExtraction {
       : null;
   if (isRollbackSafe === null) unknowns.push('isRollbackSafe');
 
-  const testCoverageSignal = has(t, /\b(no tests|without tests|untested|skipped tests)\b/)
+  const claimedCoverage = has(t, /\b(no tests|without tests|untested|skipped tests)\b/)
     ? 'none'
     : has(t, /\b(full coverage|comprehensive tests|well tested)\b/)
       ? 'strong'
-      : hasTests
-        ? 'partial'
-        : 'none';
+      : null;
+  const testCoverageSignal = files
+    ? hasTests
+      ? claimedCoverage === 'strong'
+        ? 'strong'
+        : 'partial'
+      : 'none'
+    : (claimedCoverage ?? (hasTests ? 'partial' : 'none'));
 
   // A conventional-commit prefix is a far stronger signal than loose keywords.
   const conventional = input
@@ -112,15 +188,21 @@ function mockPrRisk(input: string): MockExtraction {
 
   const typeSet = new Set<string>();
   if (conventional) typeSet.add(CONVENTIONAL_TYPE[conventional]);
-  // A "docs:" or "test:" commit is exactly that — do not let stray keywords widen it.
-  if (conventional !== 'docs' && conventional !== 'test') {
+  if (docsOrTestsOnly) {
+    // Only docs and tests changed: that is what the change is, whatever words it uses.
+    if (anyFile(PATH.docs)) typeSet.add('docs');
+    if (anyFile(PATH.test)) typeSet.add('test');
+  } else if (conventional !== 'docs' && conventional !== 'test') {
+    // A "docs:" or "test:" commit is exactly that — do not let stray keywords widen it.
     if (has(t, /\b(feature|add|introduce|new endpoint)\b/)) typeSet.add('feature');
     if (has(t, /\b(fix|bug|patch)\b/)) typeSet.add('bugfix');
     if (has(t, /\b(refactor|cleanup|rename)\b/)) typeSet.add('refactor');
     if (hasDatabaseMigration) typeSet.add('migration');
-    if (has(t, /\b(dependency|package\.json|upgrade|bump)\b/)) typeSet.add('dependency');
-    if (has(t, /\b(infra|terraform|kubernetes|helm|dockerfile)\b/)) typeSet.add('infra');
-    if (has(t, /\b(docs|readme|documentation)\b/)) typeSet.add('docs');
+    if (files ? addsOrUpdatesDependencies : has(t, /\b(dependency|package\.json|upgrade|bump)\b/)) {
+      typeSet.add('dependency');
+    }
+    if (files ? touchesInfra : has(t, /\b(infra|terraform|kubernetes|helm|dockerfile)\b/)) typeSet.add('infra');
+    if (!files && has(t, /\b(docs|readme|documentation)\b/)) typeSet.add('docs');
   }
   const changeTypes = [...typeSet];
 
@@ -130,13 +212,13 @@ function mockPrRisk(input: string): MockExtraction {
   if (hasDatabaseMigration || has(t, /\b(database|postgres|mysql|query|sql)\b/)) touchedAreas.push('database');
   if (has(t, /\b(api|endpoint|route|graphql)\b/)) touchedAreas.push('api');
   if (has(t, /\b(ui|component|css|frontend|react)\b/)) touchedAreas.push('ui');
-  if (has(t, /\b(ci|pipeline|workflow|github action)\b/)) touchedAreas.push('ci');
-  if (has(t, /\b(infra|terraform|kubernetes|helm)\b/)) touchedAreas.push('infra');
+  if (touchesCi) touchedAreas.push('ci');
+  if (touchesInfra) touchedAreas.push('infra');
   if (touchedAreas.length === 0) touchedAreas.push('other');
 
   return {
     raw: {
-      title: firstLine(input),
+      title,
       summary: input.slice(0, 400),
       changeTypes,
       touchedAreas,
@@ -153,9 +235,10 @@ function mockPrRisk(input: string): MockExtraction {
           /\b(schema change|schema migration|alter table|add column|drop column|rename column|create index|drop index|add constraint|foreign key)\b/,
         ),
       touchesAuthOrCrypto,
+      addressesSecurityIssue,
       touchesPaymentFlow,
       handlesPII: has(t, /\b(pii|personal data|gdpr|email address|phone number|ssn)\b/),
-      addsOrUpdatesDependencies: has(t, /\b(dependency|dependencies|package\.json|upgrade|bump|lockfile)\b/),
+      addsOrUpdatesDependencies,
       hasFeatureFlag: has(t, /\b(feature flag|behind a flag|flag-gated|launchdarkly|killswitch)\b/),
       hasTests,
       testCoverageSignal,
@@ -166,8 +249,8 @@ function mockPrRisk(input: string): MockExtraction {
       unknowns,
     },
     llm: {
-      stance: optimism(input),
-      headline: optimism(input) === 'PROCEED' ? 'Looks mergeable' : 'Worth a second look',
+      stance: optimism(prose),
+      headline: optimism(prose) === 'PROCEED' ? 'Looks mergeable' : 'Worth a second look',
       rationale:
         'Surface reading of the description suggests a contained change with a clear intent. The author appears confident and the summary reads as routine.',
       confidence: 0.74,
@@ -182,7 +265,7 @@ function mockBugTriage(input: string): MockExtraction {
   const t = input.toLowerCase();
   const unknowns: string[] = [];
 
-  const affectedUserEstimate = num(input, /(\d[\d,]*)\s*(?:users|customers|accounts|tenants)/i);
+  const affectedUserEstimate = num(input, /(\d[\d,]{0,12})\s{0,5}(?:users|customers|accounts|tenants)/i);
   if (affectedUserEstimate === null) unknowns.push('affectedUserEstimate');
 
   const environment = has(t, /\b(prod|production|live)\b/)
@@ -278,36 +361,36 @@ function mockDeployGate(input: string): MockExtraction {
   const t = input.toLowerCase();
   const unknowns: string[] = [];
 
-  const errorRatePct = num(input, /error[ _-]?rate[^0-9%]*([\d.]+)\s*%/i);
+  const errorRatePct = num(input, /error[ _-]?rate[^0-9%]{0,40}([\d.]{1,12})\s{0,5}%/i);
   const baselineErrorRatePct = firstNum(
     input,
-    /(?:versus|vs\.?|against|compared to)\s*(?:an?\s*)?([\d.]+)\s*%\s*baseline/i,
-    /baseline[^0-9%.\n]*([\d.]+)\s*%/i,
+    /(?:versus|vs\.?|against|compared to)\s{0,5}(?:an?\s{0,5})?([\d.]{1,12})\s{0,5}%\s{0,5}baseline/i,
+    /baseline[^0-9%.\n]{0,40}([\d.]{1,12})\s{0,5}%/i,
   );
-  const p95LatencyMs = num(input, /p9[59][^0-9]*([\d.]+)\s*ms/i);
+  const p95LatencyMs = num(input, /p9[59][^0-9]{0,40}([\d.]{1,12})\s{0,5}ms/i);
   const baselineP95LatencyMs = firstNum(
     input,
-    /(?:versus|vs\.?|against|compared to)\s*(?:an?\s*)?([\d.]+)\s*ms\s*baseline/i,
-    /baseline[^0-9.\n]*p9[59][^0-9]*([\d.]+)\s*ms/i,
+    /(?:versus|vs\.?|against|compared to)\s{0,5}(?:an?\s{0,5})?([\d.]{1,12})\s{0,5}ms\s{0,5}baseline/i,
+    /baseline[^0-9.\n]{0,40}p9[59][^0-9]{0,40}([\d.]{1,12})\s{0,5}ms/i,
   );
-  const cpuSaturationPct = num(input, /cpu[^0-9%]*([\d.]+)\s*%/i);
-  const memorySaturationPct = num(input, /mem(?:ory)?[^0-9%]*([\d.]+)\s*%/i);
+  const cpuSaturationPct = num(input, /cpu[^0-9%]{0,40}([\d.]{1,12})\s{0,5}%/i);
+  const memorySaturationPct = num(input, /mem(?:ory)?[^0-9%]{0,40}([\d.]{1,12})\s{0,5}%/i);
   const failedHealthChecks = countOrZero(
     input,
-    /(\d+)\s*(?:of\s*\d+\s*)?health ?checks?\s*(?:are\s*)?fail/i,
+    /(\d{1,9})\s{0,5}(?:of\s{0,5}\d{1,9}\s{0,5})?health ?checks?\s{0,5}(?:are\s{0,5})?fail/i,
     /\b(?:no|zero)\s+(?:failed\s+)?health ?checks?|health ?checks?\s+(?:are\s+)?(?:all\s+)?(?:passing|green|healthy)/i,
   );
   const activeIncidents = countOrZero(
     input,
-    /(\d+)\s*(?:active|open|ongoing)?\s*incident/i,
-    /\b(?:no|zero)\s+(?:active|open|ongoing)?\s*incidents?/i,
+    /(\d{1,9})\s{0,5}(?:active|open|ongoing)?\s{0,5}incident/i,
+    /\b(?:no|zero)\s+(?:active|open|ongoing)?\s{0,5}incidents?/i,
   );
   const recentRollbacks24h = countOrZero(
     input,
-    /(\d+)\s*rollbacks?/i,
+    /(\d{1,9})\s{0,5}rollbacks?/i,
     /\b(?:no|zero)\s+rollbacks?/i,
   );
-  const trafficShiftedPct = num(input, /(\d[\d.]*)\s*%\s*(?:of\s*(?:the\s*)?)?(?:traffic|fleet)/i);
+  const trafficShiftedPct = num(input, /(\d[\d.]{0,12})\s{0,5}%\s{0,5}(?:of\s{0,5}(?:the\s{0,5})?)?(?:traffic|fleet)/i);
 
   if (errorRatePct === null) unknowns.push('errorRatePct');
   if (p95LatencyMs === null) unknowns.push('p95LatencyMs');
