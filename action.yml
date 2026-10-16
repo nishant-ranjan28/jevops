@@ -1,0 +1,76 @@
+name: JevOps PR Risk
+description: Review a pull request with JevOps. A model extracts the facts, a deterministic policy decides, and the decision is posted as a comment.
+author: Nishant Ranjan
+branding:
+  icon: shield
+  color: purple
+
+inputs:
+  github-token:
+    description: Token used to read the pull request and post the comment. Posting needs "pull-requests: write".
+    default: ${{ github.token }}
+  pull-request:
+    description: The pull request to review (URL or owner/repo#123). Defaults to the one that triggered the workflow.
+    default: ''
+  fail-on:
+    description: Fail the check at this stance or worse. One of never, guardrails, hold, block.
+    default: never
+  comment:
+    description: Post the decision as a pull request comment, edited in place on re-runs. Only ever posts in this repository.
+    default: 'true'
+  openrouter-api-key:
+    description: OpenRouter key for fact extraction. With no model key, the deterministic mock extracts the facts.
+    default: ''
+  groq-api-key:
+    description: Groq key, used as a fallback after OpenRouter or on its own.
+    default: ''
+
+outputs:
+  stance:
+    description: PROCEED, PROCEED_WITH_GUARDRAILS, HOLD or BLOCK.
+    value: ${{ steps.review.outputs.stance }}
+  score:
+    description: Risk score, 0-100.
+    value: ${{ steps.review.outputs.score }}
+  severity:
+    description: The policy's severity label.
+    value: ${{ steps.review.outputs.severity }}
+  headline:
+    description: The decision in a few words.
+    value: ${{ steps.review.outputs.headline }}
+  source:
+    description: live when a model extracted the facts, mock otherwise.
+    value: ${{ steps.review.outputs.source }}
+  model-agreed:
+    description: true when the model's own recommendation matched the policy.
+    value: ${{ steps.review.outputs.model-agreed }}
+  comment-url:
+    description: URL of the posted comment, empty when none was posted.
+    value: ${{ steps.review.outputs.comment-url }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v7
+      with:
+        node-version: 24
+
+    - name: Install JevOps
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+
+    # Inputs go through env, never into the script text, so no value can
+    # change the command. The pull request's code is never checked out or run.
+    - name: Review the pull request
+      id: review
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: node --import ./tests/register.mjs --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning scripts/action.mts
+      env:
+        JEVOPS_INPUT_GITHUB_TOKEN: ${{ inputs.github-token }}
+        JEVOPS_INPUT_PULL_REQUEST: ${{ inputs.pull-request }}
+        JEVOPS_INPUT_FAIL_ON: ${{ inputs.fail-on }}
+        JEVOPS_INPUT_COMMENT: ${{ inputs.comment }}
+        JEVOPS_INPUT_OPENROUTER_API_KEY: ${{ inputs.openrouter-api-key }}
+        JEVOPS_INPUT_GROQ_API_KEY: ${{ inputs.groq-api-key }}

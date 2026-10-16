@@ -1,0 +1,31 @@
+name: JevOps
+
+# JevOps reviewing its own pull requests with the action in this repository.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: jevops-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: PR risk
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # Checks out the action for `uses: ./`. JevOps reads the pull request
+      # through the API; it never builds or runs the change.
+      - uses: actions/checkout@v7
+      # The keyword mock is too crude to comment publicly, so the decision is
+      # posted only once an OPENROUTER_API_KEY secret is set. Until then it
+      # lands in the job summary. Fork pull requests get no secrets.
+      - uses: ./
+        with:
+          openrouter-api-key: ${{ secrets.OPENROUTER_API_KEY }}
+          comment: ${{ secrets.OPENROUTER_API_KEY != '' }}
