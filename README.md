@@ -107,6 +107,24 @@ the facts. If the model's structured output fails Zod validation, JevOps retries
 correction naming the exact fields that were rejected, and keeps whichever attempt validated
 more cleanly. Anything still invalid is replaced with the policy default and shown as a repair.
 
+### Posting the decision as a PR comment (opt-in)
+
+A self-hosted JevOps can post its decision on the reviewed pull request: the verdict, the
+score, any veto, whether the model disagreed, the fired rules, and a line saying the policy
+decided, not the model. Re-running edits the same comment instead of adding another. It is
+**off by default** and needs all three:
+
+```bash
+JEVOPS_POST_PR_COMMENTS=1
+GITHUB_TOKEN=...              # fine-grained, "Pull requests: write" on the target repos
+JEVOPS_COMMENT_REPOS=acme/payments,acme/*   # only these repos are ever commented on
+```
+
+The allowlist is required: without it, anyone who can reach your instance could make it
+comment on any public pull request with your token. Never enable this on a public demo. If
+GitHub refuses the write, the action shows as `failed` with the reason and the run still
+completes.
+
 ## What the UI shows
 
 **Pipeline rail** — all six stages (the first is `Fetch pull request` in a live review) with a live status indicator and the real output of each
@@ -363,6 +381,7 @@ ESM hook that resolves the `@/` alias and extensionless imports.
 | `provider-lock.test.mts` | `LLM_PROVIDER=mock` cannot be overridden, and request `provider`/`model` are ignored unless opted in |
 | `github-url.test.mts` | URL parsing: canonical, shorthand, and every rejection path |
 | `live-pr.test.mts` | The whole live-PR pipeline against fake GitHub + fake model, including every failure mode and the schema retry |
+| `pr-comment.test.mts` | The opt-in PR comment: deterministic formatting, the flag + token + allowlist gate, create vs edit-in-place, and a refused write failing the action, not the run |
 | `real-pr.integration.test.mts` | A **real** public pull request fetched from github.com |
 
 The live-provider suite starts a real HTTP server and exercises the actual transport for both
@@ -389,7 +408,7 @@ it, and you may need it on `next start` too.
 JevOps is early-stage (v0.x): no auth, no database, no persistence, no GitHub OAuth. State lives in the browser
 tab. The "deterministic actions" panel shows what the application *would* execute against
 GitHub, PagerDuty, and a deploy controller — the decision and the payloads are real, the
-integrations are not wired.
+integrations are not wired. The one exception is the opt-in PR comment above.
 
 ---
 

@@ -11,6 +11,9 @@ All notable changes to this project are documented here. The format follows
 - Local model provider: `LLM_PROVIDER=ollama` runs JevOps on Ollama, LM Studio or a llama.cpp
   server with no account or key (`OLLAMA_MODEL`, `OLLAMA_BASE_URL`, optional `OLLAMA_API_KEY`).
   Setting `OLLAMA_MODEL` with a cloud key adds the local model as a standby (#16).
+- Opt-in PR comment: with `JEVOPS_POST_PR_COMMENTS=1`, a write-capable `GITHUB_TOKEN` and the repo
+  in `JEVOPS_COMMENT_REPOS`, a live PR review posts the decision on the pull request and edits
+  the same comment on re-runs. A refused write shows as a `failed` action; the run completes (#21).
 
 ## [0.1.1] - 2026-10-07
 

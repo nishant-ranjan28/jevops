@@ -1,10 +1,11 @@
 import { refToUrl, type PullRequestRef } from './url';
 
 /**
- * A very small GitHub REST client — two endpoints, no SDK.
+ * A very small GitHub REST client — no SDK.
  *
  * Runs server-side only. GITHUB_TOKEN, when present, raises the rate limit
  * from 60/hour to 5000/hour; it is read here and never leaves the server.
+ * The only write is the opt-in PR comment (`upsertPullRequestComment`).
  */
 
 export type GitHubErrorKind =
@@ -12,6 +13,7 @@ export type GitHubErrorKind =
   | 'private-or-missing'
   | 'rate-limited'
   | 'bad-credentials'
+  | 'forbidden'
   | 'network'
   | 'unexpected';
 
@@ -88,10 +90,19 @@ function rateLimitMessage(response: Response): string {
   return `GitHub rate limit reached${when ? `, resets at ${when} UTC` : ''}.${suffix}`;
 }
 
-async function request(path: string, signal?: AbortSignal): Promise<Response> {
+interface WriteInit {
+  method: 'POST' | 'PATCH';
+  body: unknown;
+}
+
+async function request(path: string, signal?: AbortSignal, write?: WriteInit): Promise<Response> {
   let response: Response;
   try {
-    response = await fetch(`${apiRoot()}${path}`, { headers: headers(), signal });
+    response = await fetch(`${apiRoot()}${path}`, {
+      headers: write ? { ...headers(), 'Content-Type': 'application/json' } : headers(),
+      signal,
+      ...(write ? { method: write.method, body: JSON.stringify(write.body) } : {}),
+    });
   } catch (error) {
     if ((error as Error).name === 'AbortError') throw error;
     throw new GitHubError(
@@ -209,4 +220,86 @@ export async function fetchPullRequest(
     files,
     filesTruncated: changedFiles > files.length,
   };
+}
+
+/* ------------------------------------------------------------ PR comment */
+
+/** Marks the comment JevOps owns on a pull request, so a re-run edits it instead of adding another. */
+export const JEVOPS_COMMENT_MARKER = '<!-- jevops:pr-risk -->';
+
+export interface PostedComment {
+  id: number;
+  url: string;
+  /** True when an existing JevOps comment was edited rather than a new one created. */
+  updated: boolean;
+}
+
+interface RawComment {
+  id?: number;
+  body?: string | null;
+  html_url?: string;
+}
+
+/** Re-labels write failures: a 403/404 on a write means "no permission", not "private repo". */
+function asWriteError(error: unknown, repo: string): never {
+  if (error instanceof GitHubError && (error.status === 403 || error.status === 404) && error.kind !== 'rate-limited') {
+    throw new GitHubError(
+      'forbidden',
+      `GITHUB_TOKEN may not comment on ${repo}. A fine-grained token needs "Pull requests: write" on that repository.`,
+      error.status,
+    );
+  }
+  if (error instanceof GitHubError && error.status === 422) {
+    throw new GitHubError('unexpected', 'GitHub rejected the comment body (422).', 422);
+  }
+  throw error;
+}
+
+/**
+ * Post the JevOps decision on a pull request, or edit the earlier JevOps
+ * comment when one exists (found by `JEVOPS_COMMENT_MARKER` in the first 100
+ * comments). Throws GitHubError with a UI-safe message.
+ */
+export async function upsertPullRequestComment(
+  ref: PullRequestRef,
+  body: string,
+  signal?: AbortSignal,
+): Promise<PostedComment> {
+  const repo = `${ref.owner}/${ref.repo}`;
+  const issue = `/repos/${encodeURIComponent(ref.owner)}/${encodeURIComponent(ref.repo)}/issues`;
+  const content = body.includes(JEVOPS_COMMENT_MARKER) ? body : `${JEVOPS_COMMENT_MARKER}\n${body}`;
+
+  let existing: RawComment | undefined;
+  try {
+    const comments = await json<RawComment[]>(await request(`${issue}/${ref.number}/comments?per_page=100`, signal));
+    existing = (Array.isArray(comments) ? comments : [])
+      .filter((c) => typeof c.id === 'number' && c.body?.includes(JEVOPS_COMMENT_MARKER))
+      .at(-1);
+  } catch (error) {
+    if ((error as Error).name === 'AbortError') throw error;
+    asWriteError(error, repo);
+  }
+
+  if (existing?.id !== undefined) {
+    try {
+      const edited = await json<RawComment>(
+        await request(`${issue}/comments/${existing.id}`, signal, { method: 'PATCH', body: { body: content } }),
+      );
+      return { id: edited.id ?? existing.id, url: edited.html_url ?? existing.html_url ?? '', updated: true };
+    } catch (error) {
+      if ((error as Error).name === 'AbortError') throw error;
+      // Someone else's marked comment, or one we can no longer edit: post a fresh one.
+      if (!(error instanceof GitHubError && (error.status === 403 || error.status === 404))) asWriteError(error, repo);
+    }
+  }
+
+  try {
+    const created = await json<RawComment>(
+      await request(`${issue}/${ref.number}/comments`, signal, { method: 'POST', body: { body: content } }),
+    );
+    return { id: created.id ?? 0, url: created.html_url ?? '', updated: false };
+  } catch (error) {
+    if ((error as Error).name === 'AbortError') throw error;
+    asWriteError(error, repo);
+  }
 }
