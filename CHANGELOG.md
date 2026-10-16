@@ -14,6 +14,10 @@ All notable changes to this project are documented here. The format follows
 - Opt-in PR comment: with `JEVOPS_POST_PR_COMMENTS=1`, a write-capable `GITHUB_TOKEN` and the repo
   in `JEVOPS_COMMENT_REPOS`, a live PR review posts the decision on the pull request and edits
   the same comment on re-runs. A refused write shows as a `failed` action; the run completes (#21).
+- GitHub Action (`action.yml`): `uses: nishant-ranjan28/jevops@<ref>` reviews the triggering pull
+  request in CI, posts the same comment, writes the job summary, sets `stance`/`score`/... outputs,
+  and fails the check at a chosen stance with `fail-on`. It reads the pull request through the
+  API and never runs its code. This repository dogfoods it in `.github/workflows/jevops.yml` (#21).
 
 ## [0.1.1] - 2026-10-07
 

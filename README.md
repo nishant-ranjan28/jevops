@@ -125,6 +125,54 @@ comment on any public pull request with your token. Never enable this on a publi
 GitHub refuses the write, the action shows as `failed` with the reason and the run still
 completes.
 
+### Running it as a GitHub Action
+
+The same review runs in CI on every pull request, with no server to host. It posts the same
+comment, writes it to the job summary, and can fail the check:
+
+```yaml
+# .github/workflows/jevops.yml
+name: JevOps
+on:
+  pull_request:
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: nishant-ranjan28/jevops@main   # pin a release tag or commit SHA once one ships the action
+        with:
+          openrouter-api-key: ${{ secrets.OPENROUTER_API_KEY }}
+          fail-on: block                     # never (default), guardrails, hold or block
+```
+
+| Input | Default | |
+|---|---|---|
+| `github-token` | `github.token` | Reads the pull request and posts the comment |
+| `pull-request` | the triggering one | A URL or `owner/repo#123`, for other triggers |
+| `fail-on` | `never` | Fail the check at this stance or worse |
+| `comment` | `true` | Post the decision on the pull request, edited in place on re-runs |
+| `openrouter-api-key`, `groq-api-key` | | Model keys. Without one, the keyword mock extracts the facts |
+
+Outputs: `stance`, `score`, `severity`, `headline`, `source` (`live` or `mock`),
+`model-agreed`, `comment-url`. Other settings (`OPENROUTER_MODEL`, `LLM_PROVIDER`, a
+self-hosted `OLLAMA_BASE_URL`) go on the step's `env:`.
+
+- The action reads the pull request through the API. It never checks out, builds or runs
+  the change, and it only comments in the repository the workflow runs in.
+- **Use a model key.** The mock matches keywords in the pull request text, so on a real
+  pull request it can veto a migration that is not there. A run without a key says so in a
+  notice.
+- Pull requests from forks get a read-only token and no secrets, so they run on the mock and
+  the comment is skipped with a warning; the check itself does not fail for that.
+- The decision is only as good as the extracted facts, and the facts come from text the
+  pull request's author wrote. Treat `fail-on` as a guardrail next to human review, not a
+  replacement for it.
+
+This repository runs the action on its own pull requests (`.github/workflows/jevops.yml`).
+
 ## What the UI shows
 
 **Pipeline rail** — all six stages (the first is `Fetch pull request` in a live review) with a live status indicator and the real output of each
@@ -382,6 +430,7 @@ ESM hook that resolves the `@/` alias and extensionless imports.
 | `github-url.test.mts` | URL parsing: canonical, shorthand, and every rejection path |
 | `live-pr.test.mts` | The whole live-PR pipeline against fake GitHub + fake model, including every failure mode and the schema retry |
 | `pr-comment.test.mts` | The opt-in PR comment: deterministic formatting, the flag + token + allowlist gate, create vs edit-in-place, and a refused write failing the action, not the run |
+| `action.test.mts` | The GitHub Action: which pull request it reviews, input mapping, outputs and summary, `fail-on`, and a refused comment staying a warning |
 | `real-pr.integration.test.mts` | A **real** public pull request fetched from github.com |
 
 The live-provider suite starts a real HTTP server and exercises the actual transport for both
@@ -408,7 +457,8 @@ it, and you may need it on `next start` too.
 JevOps is early-stage (v0.x): no auth, no database, no persistence, no GitHub OAuth. State lives in the browser
 tab. The "deterministic actions" panel shows what the application *would* execute against
 GitHub, PagerDuty, and a deploy controller — the decision and the payloads are real, the
-integrations are not wired. The one exception is the opt-in PR comment above.
+integrations are not wired. The one exception is the PR comment above, opt-in on a
+self-hosted instance and on by default in the GitHub Action.
 
 ---
 
