@@ -7,6 +7,7 @@ const STATUS_TONE: Record<ExecutedAction['status'], Tone> = {
   executed: 'good',
   queued: 'warn',
   skipped: 'neutral',
+  failed: 'bad',
 };
 
 export function ActionsPanel({
@@ -35,7 +36,9 @@ export function ActionsPanel({
                       ? 'text-good'
                       : action.status === 'queued'
                         ? 'text-warn'
-                        : 'text-dim'
+                        : action.status === 'failed'
+                          ? 'text-bad'
+                          : 'text-dim'
                   }`}
                 >
                   {action.status}

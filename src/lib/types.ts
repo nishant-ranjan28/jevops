@@ -86,7 +86,7 @@ export interface Divergence {
 export interface ExecutedAction {
   id: string;
   title: string;
-  status: 'executed' | 'queued' | 'skipped';
+  status: 'executed' | 'queued' | 'skipped' | 'failed';
   detail: string;
   payload?: Record<string, string | number | boolean>;
 }

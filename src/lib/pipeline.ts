@@ -3,9 +3,10 @@ import { decisionConfidence } from './jev/engine';
 import { mergeValidation, parseFields, type ValidationReport } from './jev/parse';
 import { computeDivergence } from './divergence';
 import { mockExplain } from './explain';
-import { fetchPullRequest, GitHubError } from './github/client';
+import { fetchPullRequest, GitHubError, upsertPullRequestComment } from './github/client';
+import { formatPrComment, prCommentSetting } from './github/comment';
 import { buildPullRequestPrompt, toSummary } from './github/summarize';
-import { parsePullRequestUrl } from './github/url';
+import { parsePullRequestUrl, type PullRequestRef } from './github/url';
 import { extractJsonObject } from './llm/json';
 import { mockExtract } from './llm/mock';
 import { resolveProviderChain, type LlmProvider } from './llm/provider';
@@ -16,6 +17,7 @@ import {
   type AnalysisEvent,
   type AnalysisMeta,
   type AnalysisResult,
+  type ExecutedAction,
   type LlmRecommendation,
   type ModeId,
   type ProviderAttempt,
@@ -147,6 +149,31 @@ ${validation.shapeRejected ? 'The payload was not a JSON object.' : `These field
 Return the same analysis again as one JSON object, with every field matching the declared type and enum exactly. Do not invent values to fill gaps — use the documented default and name the field in "unknowns".`;
 }
 
+/** Post (or update) the decision as a PR comment when this deployment opted in. Never throws. */
+async function postPrComment(
+  ref: PullRequestRef,
+  pullRequest: PullRequestSummary,
+  input: Omit<Parameters<typeof formatPrComment>[0], 'pullRequest'>,
+  signal?: AbortSignal,
+): Promise<ExecutedAction> {
+  const base = { id: 'pr-comment', title: 'Post decision as a PR comment' };
+  const setting = prCommentSetting(pullRequest.repo);
+  if (!setting.enabled) return { ...base, status: 'skipped', detail: setting.reason };
+  try {
+    const posted = await upsertPullRequestComment(ref, formatPrComment({ ...input, pullRequest }), signal);
+    return {
+      ...base,
+      status: 'executed',
+      detail: `${posted.updated ? 'Updated the JevOps comment' : 'Commented'} on ${pullRequest.repo}#${pullRequest.number}`,
+      payload: { url: posted.url, updated: posted.updated },
+    };
+  } catch (error) {
+    if ((error as Error).name === 'AbortError') throw error;
+    const message = error instanceof GitHubError ? error.userMessage : (error as Error).message;
+    return { ...base, status: 'failed', detail: message };
+  }
+}
+
 /**
  * The pipeline, in order, with no shortcuts:
  *   input -> LLM facts -> schema -> Jev policy -> deterministic actions -> LLM explanation
@@ -160,6 +187,7 @@ export async function* runAnalysis(options: AnalyzeOptions): AsyncGenerator<Anal
 
   let input = options.input;
   let pullRequest: PullRequestSummary | null = null;
+  let prRef: PullRequestRef | null = null;
   let fetchMs: number | undefined;
 
   const { chain } = resolveProviderChain(providerOverride, modelOverride);
@@ -198,6 +226,7 @@ export async function* runAnalysis(options: AnalyzeOptions): AsyncGenerator<Anal
 
     try {
       const context = await fetchPullRequest(parsed.ref, signal);
+      prRef = parsed.ref;
       pullRequest = toSummary(context);
       input = buildPullRequestPrompt(context);
       fetchMs = since(fetchStart);
@@ -416,14 +445,26 @@ export async function* runAnalysis(options: AnalyzeOptions): AsyncGenerator<Anal
 
   /* ------------------------------------------------------------------ act */
   yield { type: 'stage', stage: 'act', status: 'start', label: stageLabel('act') };
-  yield { type: 'actions', actions: run.actions };
-  const executed = run.actions.filter((a) => a.status === 'executed').length;
+  const actStart = performance.now();
+  let actions = run.actions;
+  // The one real write: a PR comment, opt-in and allowlisted. Everything else
+  // in the actions panel is what the application would execute.
+  if (mode === 'pr-risk' && prRef && pullRequest) {
+    actions = [
+      ...actions,
+      await postPrComment(prRef, pullRequest, { decision: run.decision, trace: run.trace, divergence, meta }, signal),
+    ];
+  }
+  const commentMs = since(actStart);
+  yield { type: 'actions', actions };
+  const executed = actions.filter((a) => a.status === 'executed').length;
+  const failed = actions.filter((a) => a.status === 'failed').length;
   yield {
     type: 'stage',
     stage: 'act',
     status: 'done',
     label: stageLabel('act'),
-    detail: `${run.actions.length} actions · ${executed} executed`,
+    detail: `${actions.length} actions · ${executed} executed${failed ? ` · ${failed} failed` : ''}`,
   };
 
   /* -------------------------------------------------------------- explain */
@@ -506,14 +547,14 @@ export async function* runAnalysis(options: AnalyzeOptions): AsyncGenerator<Anal
     decision: run.decision,
     trace: run.trace,
     divergence,
-    actions: run.actions,
+    actions,
     explanation,
     timings: {
       fetchMs,
       analyzeMs,
       validateMs: run.timings.validateMs,
       decideMs: run.timings.decideMs,
-      actMs: run.timings.actMs,
+      actMs: run.timings.actMs + commentMs,
       explainMs,
       totalMs: since(started),
     },
