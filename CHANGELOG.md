@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Local model provider: `LLM_PROVIDER=ollama` runs JevOps on Ollama, LM Studio or a llama.cpp
+  server with no account or key (`OLLAMA_MODEL`, `OLLAMA_BASE_URL`, optional `OLLAMA_API_KEY`).
+  Setting `OLLAMA_MODEL` with a cloud key adds the local model as a standby (#16).
+
 ## [0.1.1] - 2026-10-07
 
 ### Security

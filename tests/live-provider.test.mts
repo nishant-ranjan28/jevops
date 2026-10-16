@@ -9,6 +9,8 @@
 import assert from 'node:assert/strict';
 import { createServer, type Server } from 'node:http';
 import { after, before, beforeEach, test } from 'node:test';
+import { GET as status } from '../src/app/api/status/route';
+import { resolveProviderChain } from '../src/lib/llm/provider';
 import { runAnalysis } from '../src/lib/pipeline';
 import type { AnalysisEvent, AnalysisResult } from '../src/lib/types';
 
@@ -100,6 +102,9 @@ beforeEach(() => {
   delete process.env.GROQ_BASE_URL;
   delete process.env.GROQ_MODEL;
   delete process.env.LLM_PROVIDER;
+  delete process.env.OLLAMA_BASE_URL;
+  delete process.env.OLLAMA_MODEL;
+  delete process.env.OLLAMA_API_KEY;
 });
 
 function useGroq() {
@@ -107,6 +112,12 @@ function useGroq() {
   process.env.GROQ_API_KEY = 'test-groq-key';
   process.env.GROQ_BASE_URL = baseUrl;
   process.env.GROQ_MODEL = 'llama-3.3-70b-versatile';
+}
+
+function useOllama() {
+  process.env.LLM_PROVIDER = 'ollama';
+  process.env.OLLAMA_BASE_URL = baseUrl;
+  process.env.OLLAMA_MODEL = 'qwen2.5:7b';
 }
 
 function useOpenRouter() {
@@ -189,6 +200,81 @@ test('OpenRouter: same transport, its own key, model and attribution headers', a
   assert.equal(requests[0].authorization, 'Bearer test-or-key');
   assert.equal(requests[0].body.model, 'anthropic/claude-3.5-sonnet');
   assert.equal(requests[0].headers['x-title'], 'JevOps');
+});
+
+/* ------------------------------------------------------------ local models */
+
+test('Ollama: LLM_PROVIDER=ollama runs on the local server with no API key', async () => {
+  useOllama();
+  extractionResponse = envelope(deployFacts());
+
+  const { result } = await analyze('deploy-gate', BREACHING_DEPLOY);
+
+  assert.equal(result.meta.source, 'live');
+  assert.equal(result.meta.provider, 'ollama');
+  assert.equal(result.meta.model, 'qwen2.5:7b');
+  assert.equal(requests[0].path, '/v1/chat/completions');
+  assert.equal(requests[0].authorization, undefined, 'no key, so no Authorization header');
+  assert.equal(requests[0].body.model, 'qwen2.5:7b');
+  assert.equal(result.decision.headline, 'ROLLBACK');
+});
+
+test('Ollama: defaults to llama3.1 when only LLM_PROVIDER is set', () => {
+  process.env.LLM_PROVIDER = 'ollama';
+  const { chain, configured } = resolveProviderChain();
+  assert.equal(chain[0].provider.id, 'ollama');
+  assert.equal(chain[0].provider.model, 'llama3.1');
+  assert.equal(chain.at(-1)?.provider.isMock, true, 'the chain still ends with the mock');
+  assert.deepEqual(configured, ['ollama']);
+});
+
+test('Ollama: OLLAMA_API_KEY is sent for servers that want one', async () => {
+  useOllama();
+  process.env.OLLAMA_API_KEY = 'local-key';
+  extractionResponse = envelope(deployFacts());
+
+  await analyze('deploy-gate', BREACHING_DEPLOY);
+  assert.equal(requests[0].authorization, 'Bearer local-key');
+});
+
+test('Ollama: a stopped local server falls back to mock, says so, and still decides', async () => {
+  useOllama();
+  process.env.OLLAMA_BASE_URL = 'http://127.0.0.1:1/v1';
+
+  const { events, result } = await analyze('deploy-gate', BREACHING_DEPLOY);
+
+  assert.equal(result.meta.source, 'mock');
+  assert.match(result.meta.provider, /mock fallback/);
+  assert.ok(
+    events.some((e) => e.type === 'error' && /ollama extraction failed/.test(e.message)),
+    'the failure is surfaced, not swallowed',
+  );
+  assert.equal(result.decision.headline, 'ROLLBACK');
+});
+
+test('Ollama: OLLAMA_MODEL alone adds it as a standby after the cloud providers', () => {
+  process.env.GROQ_API_KEY = 'test-groq-key';
+  process.env.OLLAMA_MODEL = 'qwen2.5:7b';
+  const { chain, configured } = resolveProviderChain();
+  assert.deepEqual(
+    chain.map((c) => c.provider.id),
+    ['groq', 'ollama', 'mock'],
+  );
+  assert.deepEqual(configured, ['groq', 'ollama']);
+});
+
+test('Ollama: with nothing set it stays out of the chain', () => {
+  const { chain } = resolveProviderChain();
+  assert.deepEqual(chain.map((c) => c.provider.id), ['mock']);
+});
+
+test('Ollama: GET /api/status lists the provider and model', async () => {
+  useOllama();
+  const body = await status().json();
+  assert.equal(body.provider, 'ollama');
+  assert.equal(body.model, 'qwen2.5:7b');
+  assert.equal(body.mock, false);
+  assert.deepEqual(body.configured, ['ollama']);
 });
 
 /* ------------------------------------------------- the model cannot decide */

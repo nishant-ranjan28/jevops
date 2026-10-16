@@ -177,15 +177,32 @@ cp env.example .env.local
 # then set ONE of:
 #   OPENROUTER_API_KEY=...
 #   GROQ_API_KEY=...
+#   LLM_PROVIDER=ollama   (a local model, no key)
 ```
 
 Keys are read server-side only and never reach the browser.
 
-**Providers are a failover chain, not a single choice.** With both keys set, the order is:
+**Run it on a local model.** Any OpenAI-compatible server on your machine works, with no
+account and no key:
+
+```bash
+ollama pull llama3.1
+LLM_PROVIDER=ollama OLLAMA_MODEL=llama3.1 npm run dev
+```
+
+`OLLAMA_BASE_URL` defaults to Ollama's `http://localhost:11434/v1`; point it at LM Studio
+(`http://localhost:1234/v1`) or a llama.cpp server (`http://localhost:8080/v1`) instead. If the
+local server is not running, the run falls back to the mock and says so. Small local models
+are a good fit here: JevOps only asks them to extract facts, and the schema gate catches and
+shows any field they get wrong.
+
+**Providers are a failover chain, not a single choice.** With several configured, the order is:
 
 ```
-preferred provider  →  the other provider  →  deterministic mock
+preferred provider  →  the other providers (cloud before local)  →  deterministic mock
 ```
+
+Setting `OLLAMA_MODEL` alongside a cloud key adds the local model as a standby.
 
 If the primary is down, rate limited, or has lost the model you asked for, the next one
 serves the run and it still completes. Each failure is surfaced as its own notice — nothing
@@ -314,9 +331,9 @@ unknown** — a rule that fired on a guess is worth less than one that fired on 
 
 ### Adding a provider
 
-`LlmProvider` is a single `complete()` method. OpenRouter and Groq share one OpenAI-compatible
-transport, so adding Ollama or a local endpoint is another config object in
-`src/lib/llm/provider.ts`, not another code path.
+`LlmProvider` is a single `complete()` method. OpenRouter, Groq and local servers (Ollama, LM
+Studio, llama.cpp) share one OpenAI-compatible transport, so another compatible provider is
+another config object in `src/lib/llm/provider.ts`, not another code path.
 
 ### Adding a mode
 
@@ -342,7 +359,7 @@ ESM hook that resolves the `@/` alias and extensionless imports.
 | `policies.test.mts` | Threshold boundaries and veto behaviour across all three policies |
 | `divergence.test.mts` | Conflict detection in both directions |
 | `json.test.mts` | Fenced, prose-wrapped, and malformed model output |
-| `live-provider.test.mts` | The live provider path end to end against a local OpenAI-compatible server |
+| `live-provider.test.mts` | The live provider path end to end against a local OpenAI-compatible server, for OpenRouter, Groq and a local Ollama-style model |
 | `provider-lock.test.mts` | `LLM_PROVIDER=mock` cannot be overridden, and request `provider`/`model` are ignored unless opted in |
 | `github-url.test.mts` | URL parsing: canonical, shorthand, and every rejection path |
 | `live-pr.test.mts` | The whole live-PR pipeline against fake GitHub + fake model, including every failure mode and the schema retry |

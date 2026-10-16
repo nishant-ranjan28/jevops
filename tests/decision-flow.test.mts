@@ -188,6 +188,7 @@ test('provider labels render for every provider', () => {
   for (const [id, label] of [
     ['openrouter', 'OpenRouter'],
     ['groq', 'Groq'],
+    ['ollama', 'Ollama'],
     ['mock', 'Mock'],
   ] as [string, string][]) {
     const nodes = buildFlowNodes({
