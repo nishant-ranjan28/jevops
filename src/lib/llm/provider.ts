@@ -19,13 +19,13 @@ export interface LlmProvider {
   complete(request: CompletionRequest): Promise<string>;
 }
 
-export type ProviderId = 'openrouter' | 'groq' | 'mock';
-
+export type ProviderId = 'openrouter' | 'groq' | 'ollama' | 'mock';
 
 interface OpenAiCompatibleConfig {
   id: ProviderId;
   baseUrl: string;
-  apiKey: string;
+  /** Omitted for local servers that need no key; then no Authorization header is sent. */
+  apiKey?: string;
   model: string;
   /** Extra headers some gateways want for attribution. */
   headers?: Record<string, string>;
@@ -54,9 +54,9 @@ interface ChatCompletionResponse {
 }
 
 /**
- * OpenRouter and Groq both speak the OpenAI chat-completions dialect,
- * so a single transport covers both. Adding Ollama later is another
- * config object, not another code path.
+ * OpenRouter, Groq and local servers (Ollama, LM Studio, llama.cpp) all speak
+ * the OpenAI chat-completions dialect, so a single transport covers them.
+ * A new compatible provider is another config object, not another code path.
  */
 function createOpenAiCompatibleProvider(config: OpenAiCompatibleConfig): LlmProvider {
   return {
@@ -69,7 +69,7 @@ function createOpenAiCompatibleProvider(config: OpenAiCompatibleConfig): LlmProv
         signal,
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${config.apiKey}`,
+          ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
           ...config.headers,
         },
         body: JSON.stringify({
@@ -138,8 +138,11 @@ export interface ProviderChain {
  *
  * Order:
  *   1. the explicitly requested provider (LLM_PROVIDER or a per-request override)
- *   2. the other configured provider
+ *   2. the other configured providers, cloud before local
  *   3. the deterministic mock
+ *
+ * A local OpenAI-compatible server (`ollama`) has no key to detect, so it joins
+ * the chain only when asked for: `LLM_PROVIDER=ollama`, or `OLLAMA_MODEL` set.
  *
  * `LLM_PROVIDER=mock` is a lock: a per-request override cannot leave mock mode,
  * so a deployment pinned to mock never spends a configured key.
@@ -160,6 +163,7 @@ export function resolveProviderChain(
 
   const openrouterKey = env('OPENROUTER_API_KEY');
   const groqKey = env('GROQ_API_KEY');
+  const ollamaEnabled = requested === 'ollama' || pinned === 'ollama' || env('OLLAMA_MODEL') !== undefined;
 
   if (requested === 'mock') {
     return {
@@ -168,6 +172,7 @@ export function resolveProviderChain(
       configured: [
         ...(openrouterKey ? (['openrouter'] as const) : []),
         ...(groqKey ? (['groq'] as const) : []),
+        ...(env('OLLAMA_MODEL') ? (['ollama'] as const) : []),
       ],
     };
   }
@@ -202,14 +207,30 @@ export function resolveProviderChain(
     };
   };
 
-  // Preferred first, then the other one as a standby.
-  const explicit = requested === 'openrouter' || requested === 'groq';
+  const buildOllama = (useOverride: boolean): ProviderResolution | null => {
+    if (!ollamaEnabled) return null;
+    const model = (useOverride ? override : undefined) ?? env('OLLAMA_MODEL') ?? 'llama3.1';
+    return {
+      provider: createOpenAiCompatibleProvider({
+        id: 'ollama',
+        baseUrl: env('OLLAMA_BASE_URL') ?? 'http://localhost:11434/v1',
+        apiKey: env('OLLAMA_API_KEY'),
+        model,
+      }),
+      reason: `Using a local model (${model}).`,
+    };
+  };
+
+  // Preferred first, then the others as standby, cloud before local.
+  const explicit = requested === 'openrouter' || requested === 'groq' || requested === 'ollama';
   const ordered: (ProviderResolution | null)[] =
     requested === 'groq'
-      ? [buildGroq(true), buildOpenRouter(false)]
+      ? [buildGroq(true), buildOpenRouter(false), buildOllama(false)]
       : requested === 'openrouter'
-        ? [buildOpenRouter(true), buildGroq(false)]
-        : [buildOpenRouter(!explicit), buildGroq(!explicit)];
+        ? [buildOpenRouter(true), buildGroq(false), buildOllama(false)]
+        : requested === 'ollama'
+          ? [buildOllama(true), buildOpenRouter(false), buildGroq(false)]
+          : [buildOpenRouter(!explicit), buildGroq(!explicit), buildOllama(!explicit)];
 
   const live = ordered.filter((r): r is ProviderResolution => r !== null);
   const configured = live.map((r) => r.provider.id);

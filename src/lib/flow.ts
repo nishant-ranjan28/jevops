@@ -166,6 +166,7 @@ export function buildFlowNodes(input: {
 export function providerName(id: string): string {
   if (id === 'openrouter') return 'OpenRouter';
   if (id === 'groq') return 'Groq';
+  if (id === 'ollama') return 'Ollama';
   if (id === 'mock') return 'Mock';
   return id;
 }
