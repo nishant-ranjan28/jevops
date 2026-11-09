@@ -402,6 +402,14 @@ unknown** — a rule that fired on a guess is worth less than one that fired on 
 Studio, llama.cpp) share one OpenAI-compatible transport, so another compatible provider is
 another config object in `src/lib/llm/provider.ts`, not another code path.
 
+### Policies as JSON
+
+Bug triage defines its ordered rules, weights, flags, thresholds, and veto metadata
+in [`bug-triage.json`](src/lib/jev/policies/bug-triage.json). The loader validates
+it at module initialization. Typed derivation and presentation remain TypeScript.
+See [the policy data format](docs/policy-data.md) for predicates, validation,
+and the migration compatibility checks.
+
 ### Adding a mode
 
 1. Add a policy in `src/lib/jev/policies/` (Zod fact schema, defaults, rules, `derive`, `present`).

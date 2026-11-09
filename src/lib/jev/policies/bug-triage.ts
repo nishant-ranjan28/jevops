@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { anyOf, evaluate, has, type JevEvaluation, type JevPolicy, type JevRule } from '../engine';
+import policyData from './bug-triage.json' with { type: 'json' };
+import { loadPolicyData, policyVeto } from '../policy-data';
 import type { DecisionField, JevDecision, Stance, Veto } from '../../types';
 
 /* ------------------------------------------------------------------ facts */
@@ -62,184 +64,20 @@ export type BugTriageFlag =
   | 'customer-comms'
   | 'backlog';
 
-export const BUG_TRIAGE_THRESHOLDS = {
-  s1Score: 72,
-  s2Score: 48,
-  s3Score: 24,
-  pageScore: 78,
-  escalateScore: 55,
-  largeBlastUsers: 500,
-  mediumBlastUsers: 50,
-} as const;
-
+const loaded = loadPolicyData<BugTriageFacts, BugTriageFlag>(policyData, {
+  facts: bugTriageFactsSchema,
+  flags: ['page-oncall', 'escalate', 'hotfix', 'security-triage', 'data-recovery',
+    'needs-repro', 'regression-owner', 'customer-comms', 'backlog'],
+  thresholds: z.strictObject({
+    s1Score: z.number().min(0).max(100), s2Score: z.number().min(0).max(100),
+    s3Score: z.number().min(0).max(100), pageScore: z.number().min(0).max(100),
+    escalateScore: z.number().min(0).max(100), largeBlastUsers: z.number().nonnegative(),
+    mediumBlastUsers: z.number().nonnegative(),
+  }),
+});
+export const BUG_TRIAGE_THRESHOLDS = loaded.thresholds;
 const T = BUG_TRIAGE_THRESHOLDS;
-
-/* ------------------------------------------------------------------ rules */
-
-export const bugTriageRules: readonly JevRule<BugTriageFacts, BugTriageFlag>[] = [
-  {
-    id: 'BUG-ENV-001',
-    label: 'Defect is live in production',
-    category: 'impact',
-    weight: 18,
-    when: (f) => f.environment === 'production',
-  },
-  {
-    id: 'BUG-ENV-002',
-    label: 'Defect is confined to a pre-production environment',
-    category: 'impact',
-    weight: -10,
-    flags: ['backlog'],
-    when: (f) => f.environment === 'development' || f.environment === 'staging',
-  },
-  {
-    id: 'BUG-IMP-001',
-    label: 'Every user is affected',
-    category: 'impact',
-    weight: 26,
-    flags: ['escalate', 'customer-comms'],
-    when: (f) => f.customerImpact === 'all-users',
-  },
-  {
-    id: 'BUG-IMP-002',
-    label: 'A large subset of users is affected',
-    category: 'impact',
-    weight: 18,
-    flags: ['customer-comms'],
-    when: (f) => f.customerImpact === 'large-subset',
-  },
-  {
-    id: 'BUG-IMP-003',
-    label: 'A small subset of users is affected',
-    category: 'impact',
-    weight: 8,
-    when: (f) => f.customerImpact === 'small-subset',
-  },
-  {
-    id: 'BUG-IMP-004',
-    label: `Estimated blast radius exceeds ${T.largeBlastUsers} users`,
-    category: 'impact',
-    weight: 12,
-    flags: ['customer-comms'],
-    when: (f) => (f.affectedUserEstimate ?? 0) > T.largeBlastUsers,
-  },
-  {
-    id: 'BUG-IMP-005',
-    label: 'Core user workflow is blocked outright',
-    category: 'impact',
-    weight: 16,
-    flags: ['escalate'],
-    when: (f) => f.blocksCoreWorkflow,
-  },
-  {
-    id: 'BUG-IMP-006',
-    label: 'Revenue path is impacted',
-    category: 'impact',
-    weight: 16,
-    flags: ['escalate', 'customer-comms'],
-    when: (f) => f.revenueImpacting,
-  },
-  {
-    id: 'BUG-RISK-001',
-    label: 'Data loss or corruption is in play',
-    category: 'reliability',
-    weight: 28,
-    flags: ['page-oncall', 'data-recovery', 'escalate'],
-    when: (f) => f.dataLossOrCorruption,
-  },
-  {
-    id: 'BUG-RISK-002',
-    label: 'Report carries a security implication',
-    category: 'security',
-    weight: 24,
-    flags: ['security-triage', 'escalate'],
-    when: (f) => f.securityImplication,
-  },
-  {
-    id: 'BUG-RISK-003',
-    label: 'Contractual or SLA breach is at risk',
-    category: 'process',
-    weight: 14,
-    flags: ['escalate', 'customer-comms'],
-    when: (f) => f.slaOrContractualRisk,
-  },
-  {
-    id: 'BUG-REG-001',
-    label: 'Defect is a regression from a recent release',
-    category: 'reliability',
-    weight: 14,
-    flags: ['regression-owner', 'hotfix'],
-    when: (f) => f.regressionFromRecentRelease,
-  },
-  {
-    id: 'BUG-REPRO-001',
-    label: 'Defect reproduces every time',
-    category: 'reliability',
-    weight: 8,
-    when: (f) => f.reproducibility === 'always',
-  },
-  {
-    id: 'BUG-REPRO-002',
-    label: 'Defect is intermittent — root cause will be harder to pin down',
-    category: 'reliability',
-    weight: 5,
-    flags: ['needs-repro'],
-    when: (f) => f.reproducibility === 'intermittent',
-  },
-  {
-    id: 'BUG-REPRO-003',
-    label: 'Defect could not be reproduced',
-    category: 'reliability',
-    weight: -12,
-    flags: ['needs-repro'],
-    when: (f) => f.reproducibility === 'cannot-reproduce',
-  },
-  {
-    id: 'BUG-MIT-001',
-    label: 'A workaround exists for affected users',
-    category: 'impact',
-    weight: -12,
-    when: (f) => f.hasWorkaround,
-  },
-  {
-    id: 'BUG-MIT-002',
-    label: 'No workaround while a core workflow is blocked',
-    category: 'impact',
-    weight: 10,
-    flags: ['escalate'],
-    when: (f) => !f.hasWorkaround && f.blocksCoreWorkflow,
-  },
-  {
-    id: 'BUG-SRC-001',
-    label: 'Reported by a customer rather than caught internally',
-    category: 'process',
-    weight: 6,
-    flags: ['customer-comms'],
-    when: (f) => f.reportedBy === 'customer',
-  },
-  {
-    id: 'BUG-SRC-002',
-    label: 'Raised by production monitoring',
-    category: 'operational',
-    weight: 6,
-    when: (f) => f.reportedBy === 'monitoring',
-  },
-  {
-    id: 'BUG-PROC-001',
-    label: 'Reporter marked the issue as critical',
-    category: 'process',
-    weight: 6,
-    when: (f) => f.urgencySignal === 'critical',
-  },
-  {
-    id: 'BUG-PROC-002',
-    label: 'Three or more material facts are missing from the report',
-    category: 'process',
-    weight: 5,
-    flags: ['needs-repro'],
-    when: (f) => f.unknowns.length >= 3,
-  },
-];
+export const bugTriageRules: readonly JevRule<BugTriageFacts, BugTriageFlag>[] = loaded.rules;
 
 /* --------------------------------------------------------------- decision */
 
@@ -283,28 +121,7 @@ function qaPathOf(sev: Severity, ev: JevEvaluation<BugTriageFlag>): QaPath {
 
 /** Conditions that set the outcome on their own, ignoring the aggregate score. */
 function bugVeto(ev: JevEvaluation<BugTriageFlag>): Veto | null {
-  if (has(ev, 'data-recovery')) {
-    return {
-      ruleId: 'BUG-RISK-001',
-      label: 'Data loss or corruption is in play',
-      threshold: 'data loss ⇒ page on-call, whatever urgency the reporter stated',
-    };
-  }
-  if (has(ev, 'security-triage')) {
-    return {
-      ruleId: 'BUG-RISK-002',
-      label: 'Report carries a security implication',
-      threshold: 'security implication ⇒ escalate to security triage under embargo',
-    };
-  }
-  if (ev.score >= T.pageScore) {
-    return {
-      ruleId: 'BUG-THRESHOLD',
-      label: `Aggregate impact score reached ${ev.score}`,
-      threshold: `impact score ≥ ${T.pageScore} ⇒ page on-call`,
-    };
-  }
-  return null;
+  return policyVeto(loaded.vetoes, ev);
 }
 
 const STANCE_BY_PRIORITY: Record<Priority, Stance> = {
@@ -315,9 +132,9 @@ const STANCE_BY_PRIORITY: Record<Priority, Stance> = {
 };
 
 export const bugTriagePolicy: JevPolicy<BugTriageFacts, BugTriageFlag, BugTriageDecision> = {
-  id: 'jev.bug-triage',
-  version: '1.1.0',
-  title: 'Bug Triage Policy',
+  id: loaded.id,
+  version: loaded.version,
+  title: loaded.title,
   rules: bugTriageRules,
   derive(facts, ev) {
     const score = ev.score;

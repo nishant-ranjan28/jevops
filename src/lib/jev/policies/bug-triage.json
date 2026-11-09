@@ -1,0 +1,342 @@
+{
+  "id": "jev.bug-triage",
+  "version": "1.1.0",
+  "title": "Bug Triage Policy",
+  "thresholds": {
+    "s1Score": 72,
+    "s2Score": 48,
+    "s3Score": 24,
+    "pageScore": 78,
+    "escalateScore": 55,
+    "largeBlastUsers": 500,
+    "mediumBlastUsers": 50
+  },
+  "rules": [
+    {
+      "id": "BUG-ENV-001",
+      "label": "Defect is live in production",
+      "category": "impact",
+      "weight": 18,
+      "when": {
+        "fact": "environment",
+        "op": "eq",
+        "value": "production"
+      }
+    },
+    {
+      "id": "BUG-ENV-002",
+      "label": "Defect is confined to a pre-production environment",
+      "category": "impact",
+      "weight": -10,
+      "flags": [
+        "backlog"
+      ],
+      "when": {
+        "any": [
+          {
+            "fact": "environment",
+            "op": "eq",
+            "value": "development"
+          },
+          {
+            "fact": "environment",
+            "op": "eq",
+            "value": "staging"
+          }
+        ]
+      }
+    },
+    {
+      "id": "BUG-IMP-001",
+      "label": "Every user is affected",
+      "category": "impact",
+      "weight": 26,
+      "flags": [
+        "escalate",
+        "customer-comms"
+      ],
+      "when": {
+        "fact": "customerImpact",
+        "op": "eq",
+        "value": "all-users"
+      }
+    },
+    {
+      "id": "BUG-IMP-002",
+      "label": "A large subset of users is affected",
+      "category": "impact",
+      "weight": 18,
+      "flags": [
+        "customer-comms"
+      ],
+      "when": {
+        "fact": "customerImpact",
+        "op": "eq",
+        "value": "large-subset"
+      }
+    },
+    {
+      "id": "BUG-IMP-003",
+      "label": "A small subset of users is affected",
+      "category": "impact",
+      "weight": 8,
+      "when": {
+        "fact": "customerImpact",
+        "op": "eq",
+        "value": "small-subset"
+      }
+    },
+    {
+      "id": "BUG-IMP-004",
+      "label": "Estimated blast radius exceeds {largeBlastUsers} users",
+      "category": "impact",
+      "weight": 12,
+      "flags": [
+        "customer-comms"
+      ],
+      "when": {
+        "fact": "affectedUserEstimate",
+        "op": "gt",
+        "value": {
+          "threshold": "largeBlastUsers"
+        }
+      }
+    },
+    {
+      "id": "BUG-IMP-005",
+      "label": "Core user workflow is blocked outright",
+      "category": "impact",
+      "weight": 16,
+      "flags": [
+        "escalate"
+      ],
+      "when": {
+        "fact": "blocksCoreWorkflow",
+        "op": "eq",
+        "value": true
+      }
+    },
+    {
+      "id": "BUG-IMP-006",
+      "label": "Revenue path is impacted",
+      "category": "impact",
+      "weight": 16,
+      "flags": [
+        "escalate",
+        "customer-comms"
+      ],
+      "when": {
+        "fact": "revenueImpacting",
+        "op": "eq",
+        "value": true
+      }
+    },
+    {
+      "id": "BUG-RISK-001",
+      "label": "Data loss or corruption is in play",
+      "category": "reliability",
+      "weight": 28,
+      "flags": [
+        "page-oncall",
+        "data-recovery",
+        "escalate"
+      ],
+      "when": {
+        "fact": "dataLossOrCorruption",
+        "op": "eq",
+        "value": true
+      }
+    },
+    {
+      "id": "BUG-RISK-002",
+      "label": "Report carries a security implication",
+      "category": "security",
+      "weight": 24,
+      "flags": [
+        "security-triage",
+        "escalate"
+      ],
+      "when": {
+        "fact": "securityImplication",
+        "op": "eq",
+        "value": true
+      }
+    },
+    {
+      "id": "BUG-RISK-003",
+      "label": "Contractual or SLA breach is at risk",
+      "category": "process",
+      "weight": 14,
+      "flags": [
+        "escalate",
+        "customer-comms"
+      ],
+      "when": {
+        "fact": "slaOrContractualRisk",
+        "op": "eq",
+        "value": true
+      }
+    },
+    {
+      "id": "BUG-REG-001",
+      "label": "Defect is a regression from a recent release",
+      "category": "reliability",
+      "weight": 14,
+      "flags": [
+        "regression-owner",
+        "hotfix"
+      ],
+      "when": {
+        "fact": "regressionFromRecentRelease",
+        "op": "eq",
+        "value": true
+      }
+    },
+    {
+      "id": "BUG-REPRO-001",
+      "label": "Defect reproduces every time",
+      "category": "reliability",
+      "weight": 8,
+      "when": {
+        "fact": "reproducibility",
+        "op": "eq",
+        "value": "always"
+      }
+    },
+    {
+      "id": "BUG-REPRO-002",
+      "label": "Defect is intermittent — root cause will be harder to pin down",
+      "category": "reliability",
+      "weight": 5,
+      "flags": [
+        "needs-repro"
+      ],
+      "when": {
+        "fact": "reproducibility",
+        "op": "eq",
+        "value": "intermittent"
+      }
+    },
+    {
+      "id": "BUG-REPRO-003",
+      "label": "Defect could not be reproduced",
+      "category": "reliability",
+      "weight": -12,
+      "flags": [
+        "needs-repro"
+      ],
+      "when": {
+        "fact": "reproducibility",
+        "op": "eq",
+        "value": "cannot-reproduce"
+      }
+    },
+    {
+      "id": "BUG-MIT-001",
+      "label": "A workaround exists for affected users",
+      "category": "impact",
+      "weight": -12,
+      "when": {
+        "fact": "hasWorkaround",
+        "op": "eq",
+        "value": true
+      }
+    },
+    {
+      "id": "BUG-MIT-002",
+      "label": "No workaround while a core workflow is blocked",
+      "category": "impact",
+      "weight": 10,
+      "flags": [
+        "escalate"
+      ],
+      "when": {
+        "all": [
+          {
+            "fact": "hasWorkaround",
+            "op": "eq",
+            "value": false
+          },
+          {
+            "fact": "blocksCoreWorkflow",
+            "op": "eq",
+            "value": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "BUG-SRC-001",
+      "label": "Reported by a customer rather than caught internally",
+      "category": "process",
+      "weight": 6,
+      "flags": [
+        "customer-comms"
+      ],
+      "when": {
+        "fact": "reportedBy",
+        "op": "eq",
+        "value": "customer"
+      }
+    },
+    {
+      "id": "BUG-SRC-002",
+      "label": "Raised by production monitoring",
+      "category": "operational",
+      "weight": 6,
+      "when": {
+        "fact": "reportedBy",
+        "op": "eq",
+        "value": "monitoring"
+      }
+    },
+    {
+      "id": "BUG-PROC-001",
+      "label": "Reporter marked the issue as critical",
+      "category": "process",
+      "weight": 6,
+      "when": {
+        "fact": "urgencySignal",
+        "op": "eq",
+        "value": "critical"
+      }
+    },
+    {
+      "id": "BUG-PROC-002",
+      "label": "Three or more material facts are missing from the report",
+      "category": "process",
+      "weight": 5,
+      "flags": [
+        "needs-repro"
+      ],
+      "when": {
+        "fact": "unknowns",
+        "op": "gte",
+        "value": 3,
+        "projection": "length"
+      }
+    }
+  ],
+  "vetoes": [
+    {
+      "flag": "data-recovery",
+      "ruleId": "BUG-RISK-001",
+      "label": "Data loss or corruption is in play",
+      "threshold": "data loss ⇒ page on-call, whatever urgency the reporter stated"
+    },
+    {
+      "flag": "security-triage",
+      "ruleId": "BUG-RISK-002",
+      "label": "Report carries a security implication",
+      "threshold": "security implication ⇒ escalate to security triage under embargo"
+    },
+    {
+      "minScore": {
+        "threshold": "pageScore"
+      },
+      "ruleId": "BUG-THRESHOLD",
+      "label": "Aggregate impact score reached {score}",
+      "threshold": "impact score ≥ {pageScore} ⇒ page on-call"
+    }
+  ]
+}
