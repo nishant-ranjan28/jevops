@@ -272,6 +272,25 @@ export function Cockpit({
     [analyze],
   );
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target;
+      if (
+        running || traceOpen || event.defaultPrevented || event.repeat ||
+        event.altKey || event.ctrlKey || event.metaKey || event.shiftKey ||
+        (target instanceof HTMLElement &&
+          (target.isContentEditable || target.closest('input, textarea, select, [role="textbox"]')))
+      ) return;
+      if (!/^[1-5]$/.test(event.key)) return;
+      const scenario = scenarios[Number(event.key) - 1];
+      if (!scenario) return;
+      event.preventDefault();
+      runDemo(scenario);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [running, traceOpen, scenarios, runDemo]);
+
   const liveMode = modeId === LIVE_PR_MODE && inputSource === 'live-pr';
   const descriptors = stagesFor(liveMode);
   const activeStage = descriptors.find((s) => stages[s.id]?.status === 'start');

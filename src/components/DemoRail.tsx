@@ -36,7 +36,7 @@ export function DemoRail({
       </div>
 
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-        {scenarios.map((scenario) => {
+        {scenarios.map((scenario, index) => {
           const active = scenario.id === activeId;
           return (
             <button
@@ -45,6 +45,7 @@ export function DemoRail({
               disabled={disabled}
               onClick={() => onRun(scenario)}
               title={scenario.shows}
+              aria-keyshortcuts={index < 5 ? String(index + 1) : undefined}
               className={`bg-panel group rounded-lg border p-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                 active ? 'border-accent/60 bg-accent/[0.06]' : TONE_RING[scenario.tone]
               }`}
@@ -57,7 +58,14 @@ export function DemoRail({
                   <span aria-hidden className="bg-accent size-1.5 rounded-full" />
                 ) : null}
               </div>
-              <p className="mt-1.5 text-[13px] font-medium text-ink">{scenario.label}</p>
+              <p className="mt-1.5 text-[13px] font-medium text-ink">
+                {scenario.label}
+                {index < 5 ? (
+                  <span className="mono ml-2 rounded border border-line px-1 text-[10px] text-dim">
+                    <span className="sr-only">Keyboard shortcut </span>{index + 1}
+                  </span>
+                ) : null}
+              </p>
               <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-dim">{scenario.shows}</p>
               <p className={`mono mt-2 text-[10px] ${TONE_TEXT[scenario.tone]}`}>{scenario.expect}</p>
             </button>
